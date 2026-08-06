@@ -1,0 +1,108 @@
+:root {
+  --ink: #17233d;
+  --muted: #71809b;
+  --card: rgba(255,255,255,.88);
+  --border: rgba(133,154,187,.18);
+  --shadow: 0 18px 50px rgba(76, 101, 137, .16);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+body { font-family: Inter, system-ui, sans-serif; color: var(--ink); background: #eef6ff; }
+#app, #scene { position: fixed; inset: 0; }
+canvas { display: block; }
+
+.glass-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.cluster-card {
+  position: absolute;
+  left: 28px;
+  top: 24px;
+  min-width: 430px;
+  padding: 18px 22px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.k8s-logo {
+  width: 58px; height: 58px; border-radius: 16px;
+  display: grid; place-items: center;
+  color: white; font-size: 38px;
+  background: linear-gradient(145deg, #4a8cff, #2563eb);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, .28);
+}
+h1 { margin: 0 0 9px; font-size: 27px; letter-spacing: -.03em; }
+.cluster-meta { display: flex; gap: 20px; color: var(--muted); font-size: 14px; }
+.cluster-meta b { color: #305fb7; }
+.healthy { color: #2da664; font-weight: 700; }
+.healthy i { display:inline-block; width:10px; height:10px; border-radius:50%; background:#35c878; margin-right:6px; box-shadow:0 0 0 5px rgba(53,200,120,.12); }
+
+.namespace-card {
+  position: absolute;
+  right: 28px;
+  top: 24px;
+  width: 360px;
+  padding: 18px 20px;
+  border-radius: 18px;
+}
+.namespace-card h2 { font-size: 15px; margin: 0 0 13px; }
+.namespace-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 20px; }
+.namespace-item { display:flex; align-items:center; gap:8px; color:#52617a; font-size:13px; }
+.namespace-dot { width:11px; height:11px; border-radius:50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+
+.stats-bar {
+  position: absolute;
+  left: 50%; bottom: 22px;
+  transform: translateX(-50%);
+  width: min(1080px, calc(100% - 48px));
+  border-radius: 20px;
+  padding: 17px 22px;
+  display:grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.stats-bar article { display:flex; align-items:center; gap:13px; min-width:0; padding:4px 12px; border-right:1px solid rgba(130,150,180,.16); }
+.stats-bar article:last-child { border-right:0; }
+.stat-icon { width:34px; font-size:29px; color:#8a9ab7; text-align:center; }
+.stats-bar small, .stats-bar em { display:block; font-style:normal; color:#7f8da4; }
+.stats-bar small { font-size:13px; margin-bottom:4px; }
+.stats-bar strong { display:block; font-size:21px; line-height:1; }
+.stats-bar em { margin-top:5px; font-size:12px; color:#65a66c; }
+.status-text { color:#39af65; font-size:19px !important; }
+
+.info-panel {
+  position:absolute;
+  right:28px;
+  top:154px;
+  width:310px;
+  border-radius:18px;
+  padding:18px 20px 20px;
+  opacity:0;
+  transform: translateY(-8px) scale(.98);
+  pointer-events:none;
+  transition:.22s ease;
+}
+.info-panel.show { opacity:1; transform:none; pointer-events:auto; }
+.info-panel button { position:absolute; top:9px; right:12px; border:0; background:transparent; font-size:23px; color:#7a879b; cursor:pointer; }
+.info-panel .eyebrow { color:#3f7fdd; font-size:11px; text-transform:uppercase; letter-spacing:.12em; font-weight:800; }
+.info-panel h2 { margin:6px 0 13px; font-size:20px; word-break:break-word; }
+.info-row { display:flex; justify-content:space-between; gap:14px; padding:8px 0; border-top:1px solid rgba(120,145,180,.15); font-size:13px; }
+.info-row span:first-child { color:#77849a; }
+.info-row span:last-child { font-weight:700; text-align:right; }
+
+.help { position:absolute; left:28px; bottom:128px; color:#6e7e96; font-size:12px; background:rgba(255,255,255,.68); padding:8px 11px; border-radius:10px; }
+
+@media (max-width: 900px) {
+  .cluster-card { min-width:0; right:20px; left:20px; }
+  .namespace-card { display:none; }
+  .stats-bar { grid-template-columns: repeat(3,1fr); }
+  .stats-bar article:nth-child(n+4) { display:none; }
+  .info-panel { right:20px; top:130px; width:280px; }
+}

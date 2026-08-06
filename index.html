@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kubernetes Cluster Village</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main id="app">
+    <div id="scene"></div>
+
+    <header class="cluster-card glass-card">
+      <div class="k8s-logo">☸</div>
+      <div>
+        <h1>Kubernetes Cluster</h1>
+        <div class="cluster-meta">
+          <span><b id="nodeCount">3</b> Nodes</span>
+          <span><b id="podCount">0</b> Pods</span>
+          <span class="healthy"><i></i> Healthy</span>
+        </div>
+      </div>
+    </header>
+
+    <aside class="namespace-card glass-card">
+      <h2>Namespaces</h2>
+      <div id="namespaceLegend" class="namespace-list"></div>
+    </aside>
+
+    <section id="infoPanel" class="info-panel glass-card">
+      <button id="closeInfo" aria-label="Cerrar">×</button>
+      <div class="eyebrow" id="infoKind">Recurso</div>
+      <h2 id="infoTitle">Selecciona un elemento</h2>
+      <div id="infoRows"></div>
+    </section>
+
+    <footer class="stats-bar glass-card">
+      <article><span class="stat-icon">⬡</span><div><small>Pods</small><strong id="statPods">0</strong><em>Running</em></div></article>
+      <article><span class="stat-icon">▦</span><div><small>Nodes</small><strong id="statNodes">3</strong><em>All Healthy</em></div></article>
+      <article><span class="stat-icon">◫</span><div><small>Namespaces</small><strong id="statNamespaces">0</strong><em>Active</em></div></article>
+      <article><span class="stat-icon">◈</span><div><small>Containers</small><strong id="statContainers">0</strong><em>Running</em></div></article>
+      <article><span class="stat-icon">✓</span><div><small>Status</small><strong class="status-text">Healthy</strong><em>All systems normal</em></div></article>
+    </footer>
+
+    <div class="help">Arrastra para girar · rueda para zoom · clic para inspeccionar</div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+</body>
+</html>

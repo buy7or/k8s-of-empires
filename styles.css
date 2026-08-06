@@ -1,16 +1,30 @@
 :root {
   --ink: #17233d;
   --muted: #71809b;
-  --card: rgba(255,255,255,.88);
-  --border: rgba(133,154,187,.18);
-  --shadow: 0 18px 50px rgba(76, 101, 137, .16);
+  --card: rgba(255,255,255,.9);
+  --border: rgba(133,154,187,.16);
+  --shadow: 0 18px 48px rgba(76, 101, 137, .13);
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
-body { font-family: Inter, system-ui, sans-serif; color: var(--ink); background: #eef6ff; }
+body {
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255,255,255,.96) 0, rgba(244,249,255,.78) 38%, transparent 68%),
+    linear-gradient(180deg, #edf6ff 0%, #f7fbff 68%, #eaf3fb 100%);
+}
 #app, #scene { position: fixed; inset: 0; }
+#app { isolation: isolate; }
+#scene { z-index: 0; }
 canvas { display: block; }
+
+.cluster-card,
+.namespace-card,
+.info-panel,
+.stats-bar,
+.help { z-index: 100; }
 
 .glass-card {
   background: var(--card);
@@ -24,22 +38,24 @@ canvas { display: block; }
   position: absolute;
   left: 28px;
   top: 24px;
-  min-width: 430px;
-  padding: 18px 22px;
+  min-width: 520px;
+  padding: 19px 22px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 16px;
 }
 .k8s-logo {
-  width: 58px; height: 58px; border-radius: 16px;
+  width: 58px; height: 58px;
   display: grid; place-items: center;
   color: white; font-size: 38px;
   background: linear-gradient(145deg, #4a8cff, #2563eb);
-  box-shadow: 0 10px 22px rgba(37, 99, 235, .28);
+  clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0 50%);
+  filter: drop-shadow(0 9px 10px rgba(37, 99, 235, .24));
 }
-h1 { margin: 0 0 9px; font-size: 27px; letter-spacing: -.03em; }
-.cluster-meta { display: flex; gap: 20px; color: var(--muted); font-size: 14px; }
+h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -.035em; }
+.cluster-meta { display: flex; gap: 8px; color: var(--muted); font-size: 13px; }
+.cluster-meta span { padding: 6px 10px; border-radius: 6px; background: rgba(226,234,246,.46); }
 .cluster-meta b { color: #305fb7; }
 .healthy { color: #2da664; font-weight: 700; }
 .healthy i { display:inline-block; width:10px; height:10px; border-radius:50%; background:#35c878; margin-right:6px; box-shadow:0 0 0 5px rgba(53,200,120,.12); }
@@ -48,12 +64,12 @@ h1 { margin: 0 0 9px; font-size: 27px; letter-spacing: -.03em; }
   position: absolute;
   right: 28px;
   top: 24px;
-  width: 360px;
+  width: 408px;
   padding: 18px 20px;
   border-radius: 8px;
 }
 .namespace-card h2 { font-size: 15px; margin: 0 0 13px; }
-.namespace-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 20px; }
+.namespace-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 18px; }
 .namespace-item { display:flex; align-items:center; gap:8px; color:#52617a; font-size:13px; }
 .namespace-dot { width:11px; height:11px; border-radius:50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
 
@@ -61,16 +77,16 @@ h1 { margin: 0 0 9px; font-size: 27px; letter-spacing: -.03em; }
   position: absolute;
   left: 50%; bottom: 22px;
   transform: translateX(-50%);
-  width: min(1080px, calc(100% - 48px));
+  width: min(1270px, calc(100% - 48px));
   border-radius: 10px;
-  padding: 17px 22px;
+  padding: 20px 24px;
   display:grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 10px;
 }
-.stats-bar article { display:flex; align-items:center; gap:13px; min-width:0; padding:4px 12px; border-right:1px solid rgba(130,150,180,.16); }
+.stats-bar article { display:flex; align-items:center; gap:14px; min-width:0; padding:4px 18px; border-right:1px solid rgba(130,150,180,.16); }
 .stats-bar article:last-child { border-right:0; }
-.stat-icon { width:34px; font-size:29px; color:#8a9ab7; text-align:center; }
+.stat-icon { width:38px; font-size:31px; color:#8799b8; text-align:center; }
 .stats-bar small, .stats-bar em { display:block; font-style:normal; color:#7f8da4; }
 .stats-bar small { font-size:13px; margin-bottom:4px; }
 .stats-bar strong { display:block; font-size:21px; line-height:1; }
@@ -79,7 +95,7 @@ h1 { margin: 0 0 9px; font-size: 27px; letter-spacing: -.03em; }
 
 .info-panel {
   position:absolute;
-  right:404px;
+  right:452px;
   top:24px;
   width:310px;
   border-radius:8px;

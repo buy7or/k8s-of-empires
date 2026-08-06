@@ -4,14 +4,14 @@
 
 /* ---------------- PALETA ---------------- */
 const COLORS = {
-  platformTop:  0x74ac4b,
-  platformSide: 0x639641,
-  platformEdge: 0x578438,
+  platformTop:  0x86bd59,
+  platformSide: 0x6fa34c,
+  platformEdge: 0x5d8d40,
   floor:        0x4b5566,   // suelo interior (pizarra)
   floorDark:    0x424b5a,
-  wall:         0xe9ecef,
-  wallShade:    0xd6dae0,
-  wallTop:      0xf2f4f6,
+  wall:         0xdfe4e8,
+  wallShade:    0xcbd2d9,
+  wallTop:      0xe9edf0,
   towerRoof:    0x5b8ac8,
   towerRoofDark:0x4a76b4,
   wood:         0x8b5e3c,
@@ -70,7 +70,7 @@ const sceneEl = document.getElementById('scene');
 const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.5, 2000);
-let camYaw = 0.0, camPitch = 0.47, camDist = 150;
+let camYaw = 0.0, camPitch = 0.61, camDist = 150;
 const camTarget = new THREE.Vector3(0, 0, 0);
 let tweenDist = camDist, tweening = false;
 const tweenTarget = camTarget.clone();
@@ -83,17 +83,17 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 sceneEl.appendChild(renderer.domElement);
 
 // luz difusa y suave (nada de sol duro)
-scene.add(new THREE.HemisphereLight(0xffffff, 0xdfe8f2, 0.82));
-const key = new THREE.DirectionalLight(0xffffff, 0.55);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xdce7f2, 0.72));
+const key = new THREE.DirectionalLight(0xfffdf8, 0.42);
 key.position.set(40, 90, 60);
 key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048);
 Object.assign(key.shadow.camera, { left: -120, right: 120, top: 120, bottom: -120, near: 1, far: 320 });
 key.shadow.bias = -0.0006;
 key.shadow.normalBias = 0.03;
-key.shadow.radius = 4;
+key.shadow.radius = 6;
 scene.add(key);
-const rim = new THREE.DirectionalLight(0xdce9ff, 0.25);
+const rim = new THREE.DirectionalLight(0xdce9ff, 0.18);
 rim.position.set(-60, 40, -40);
 scene.add(rim);
 
@@ -188,7 +188,7 @@ function nodeLabelSprite(name) {
   const tw = x.measureText(name).width;
   x.fillStyle = '#35c878';
   x.beginPath(); x.arc(82 + tw + 22, 51, 9, 0, Math.PI * 2); x.fill();
-  return spriteFromCanvas(c, 15, 4.3);
+  return spriteFromCanvas(c, 12.6, 3.6);
 }
 
 // píldora blanca "N pods"
@@ -204,7 +204,7 @@ function podPillSprite(n) {
   x.font = '600 26px Inter, system-ui, sans-serif';
   x.textAlign = 'center'; x.textBaseline = 'middle';
   x.fillText(n + (n === 1 ? ' pod' : ' pods'), W / 2, 46);
-  return spriteFromCanvas(c, 5.4, 2.05);
+  return spriteFromCanvas(c, 4.8, 1.82);
 }
 
 /* ---------------- CONSTRUCTORES ---------------- */
@@ -581,7 +581,7 @@ function decorate(pw, pd, roadZ) {
 }
 
 function updateCameraFraming(pw) {
-  camDist = pw * 1.02;
+  camDist = pw * 1.3;
   tweenDist = camDist;
 }
 

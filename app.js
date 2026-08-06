@@ -457,7 +457,7 @@ function buildNode(node) {
     g.add(t);
   });
 
-  // portón + escaleras
+  // portón
   const gate = new THREE.Group();
   const arch = new THREE.Mesh(
     new THREE.CylinderGeometry(1.5, 1.5, 1.1, 16, 1, false, 0, Math.PI),
@@ -466,16 +466,9 @@ function buildNode(node) {
   arch.rotation.z = Math.PI / 2; arch.rotation.y = Math.PI / 2;
   arch.position.set(0, 2.5, hd);
   gate.add(arch);
-  const doorPanel = box(3.0, 2.5, 1.1, COLORS.woodDark);
+  const doorPanel = box(3.0, 2.5, 1.1, COLORS.wood);
   doorPanel.position.set(0, 1.25, hd);
   gate.add(doorPanel);
-  // escalones hacia el exterior
-  for (let i = 0; i < 3; i++) {
-    const st = box(3.8 + i * 0.5, 0.28, 0.75, COLORS.steps);
-    st.position.set(0, 0.14 - i * 0.16, hd + 0.9 + i * 0.7);
-    st.receiveShadow = true;
-    gate.add(st);
-  }
   gate.traverse(o => { if (o.isMesh) o.userData.pick = { type: 'node', node }; });
   g.add(gate);
 
@@ -511,49 +504,63 @@ function buildWorld() {
   nodeGroups.length = 0;
 
   // nodos en una cuadrícula lo más cuadrada posible
-  const GAP = 7;
+  const COL_GAP = 7;
+  const ROW_GAP = 13;
   const groups = nodeData.map(n => buildNode(n));
   const cols = Math.ceil(Math.sqrt(groups.length));
   const rows = Math.ceil(groups.length / cols);
-  const cellW = Math.max(...groups.map(g => g.userData.size.W));
-  const cellD = Math.max(...groups.map(g => g.userData.size.D));
-  const totalW = cols * cellW + (cols - 1) * GAP;
-  const totalD = rows * cellD + (rows - 1) * GAP;
+  const rowGroups = Array.from({ length: rows }, (_, row) =>
+    groups.slice(row * cols, Math.min((row + 1) * cols, groups.length))
+  );
+  const rowWidths = rowGroups.map(items =>
+    items.reduce((sum, g) => sum + g.userData.size.W, 0) + COL_GAP * (items.length - 1)
+  );
+  const rowDepths = rowGroups.map(items =>
+    Math.max(...items.map(g => g.userData.size.D))
+  );
+  const totalW = Math.max(...rowWidths);
+  const totalD = rowDepths.reduce((sum, depth) => sum + depth, 0) + ROW_GAP * (rows - 1);
+  const rowSouthEdges = [];
+  let zCursor = -totalD / 2;
 
-  groups.forEach((g, i) => {
-    const row = Math.floor(i / cols);
-    const col = i % cols;
-    const nodesInRow = Math.min(cols, groups.length - row * cols);
-    const rowW = nodesInRow * cellW + (nodesInRow - 1) * GAP;
-    g.position.set(
-      -rowW / 2 + cellW / 2 + col * (cellW + GAP),
-      0,
-      -totalD / 2 + cellD / 2 + row * (cellD + GAP)
-    );
-    worldGroup.add(g);
-    nodeGroups.push(g);
+  rowGroups.forEach((items, row) => {
+    const rowSouth = zCursor + rowDepths[row];
+    rowSouthEdges.push(rowSouth);
+    let xCursor = -rowWidths[row] / 2;
+
+    items.forEach(g => {
+      const { W, D } = g.userData.size;
+      g.position.set(xCursor + W / 2, 0, rowSouth - D / 2);
+      xCursor += W + COL_GAP;
+      worldGroup.add(g);
+      nodeGroups.push(g);
+    });
+
+    zCursor = rowSouth + ROW_GAP;
   });
 
   // plataforma verde
-  const MARGIN = 8.5;
-  const pw = totalW + MARGIN * 2;
-  const pd = totalD + MARGIN * 2;
+  const SIDE_MARGIN = 8.5;
+  const BACK_MARGIN = 15;
+  const FRONT_MARGIN = 12;
+  const pw = totalW + SIDE_MARGIN * 2;
+  const pd = totalD + BACK_MARGIN + FRONT_MARGIN;
+  const platformZ = (FRONT_MARGIN - BACK_MARGIN) / 2;
   const PH = 2.6;
 
   platformMesh = new THREE.Mesh(roundedBox(pw, PH, pd, 3.5), texturedMat(COLORS.platformTop));
-  platformMesh.position.y = -PH;
+  platformMesh.position.set(0, -PH, platformZ);
   platformMesh.receiveShadow = true;
   platform.add(platformMesh);
   // faldón inferior algo más oscuro para dar grosor
   const skirt = new THREE.Mesh(roundedBox(pw - 0.7, 1.1, pd - 0.7, 3.2), texturedMat(COLORS.platformEdge));
-  skirt.position.y = -PH - 1.0;
+  skirt.position.set(0, -PH - 1.0, platformZ);
   platform.add(skirt);
 
   // un camino de arena por cada fila, delante de sus portones
   let frontRoadZ = 0;
   for (let row = 0; row < rows; row++) {
-    const rowZ = -totalD / 2 + cellD / 2 + row * (cellD + GAP);
-    const roadZ = rowZ + cellD / 2 + GAP / 2;
+    const roadZ = rowSouthEdges[row] + ROW_GAP / 2;
     frontRoadZ = roadZ;
 
     const road = new THREE.Mesh(roundedBox(totalW + 6, 0.12, 4.6, 1.2), texturedMat(COLORS.path));
@@ -561,9 +568,9 @@ function buildWorld() {
     road.receiveShadow = true;
     worldGroup.add(road);
 
-    groups.slice(row * cols, Math.min((row + 1) * cols, groups.length)).forEach(g => {
+    rowGroups[row].forEach(g => {
       const hd = g.userData.size.D / 2;
-      const gateZ = g.position.z + hd + 1.0;
+      const gateZ = g.position.z + hd;
       const len = roadZ - gateZ;
       if (len <= 0.5) return;
       const spur = new THREE.Mesh(roundedBox(3.6, 0.12, len, 1.0), texturedMat(COLORS.path));
@@ -573,13 +580,13 @@ function buildWorld() {
     });
   }
 
-  decorate(pw, pd, frontRoadZ);
+  decorate(pw, pd, frontRoadZ, platformZ);
   updateCameraFraming(Math.max(pw, pd));
   refreshUI();
 }
 
 // árboles, arbustos y rocas por el césped
-function decorate(pw, pd, roadZ) {
+function decorate(pw, pd, roadZ, platformZ = 0) {
   const r = rng(4242);
 
   function tree(x, z, s) {
@@ -607,23 +614,25 @@ function decorate(pw, pd, roadZ) {
   }
 
   const hx = pw / 2 - 3.6, hz = pd / 2 - 3.6;
+  const backZ = platformZ - hz;
+  const frontZ = platformZ + hz;
 
   // franja trasera: pocos y pequeños, pegados al borde
   for (let x = -hx; x <= hx; x += 12) {
     const jx = (r() - 0.5) * 2.5;
-    const z = -hz + (r() - 0.5) * 1.6;
+    const z = backZ + (r() - 0.5) * 1.6;
     r() < 0.6 ? tree(x + jx, z, 0.55 + r() * 0.25) : bush(x + jx, z, 0.7 + r() * 0.3);
   }
   // franja delantera, siempre por delante del camino
   for (let x = -hx; x <= hx; x += 13) {
     const jx = (r() - 0.5) * 2.5;
-    const z = hz + (r() - 0.5) * 1.4;
+    const z = frontZ + (r() - 0.5) * 1.4;
     if (z < roadZ + 3.5) continue;
     r() < 0.5 ? tree(x + jx, z, 0.55 + r() * 0.25) : rock(x + jx, z, 0.7 + r() * 0.4);
   }
   // esquinas laterales
   [-hx, hx].forEach(x => {
-    [-hz + 6, 0, hz - 6].forEach(z => {
+    [backZ + 6, platformZ, frontZ - 6].forEach(z => {
       const jz = (r() - 0.5) * 2.0;
       r() < 0.55 ? tree(x + (r() - 0.5) * 1.2, z + jz, 0.55 + r() * 0.25)
                  : bush(x, z + jz, 0.7 + r() * 0.3);

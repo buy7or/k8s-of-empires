@@ -459,17 +459,26 @@ function buildWorld() {
   while (decoGroup.children.length) decoGroup.remove(decoGroup.children[0]);
   nodeGroups.length = 0;
 
-  // nodos en fila
+  // nodos en una cuadrícula lo más cuadrada posible
   const GAP = 7;
   const groups = nodeData.map(n => buildNode(n));
-  const totalW = groups.reduce((a, g) => a + g.userData.size.W, 0) + GAP * (groups.length - 1);
-  let x = -totalW / 2;
-  let maxD = 0;
-  groups.forEach(g => {
-    const w = g.userData.size.W;
-    g.position.x = x + w / 2;
-    x += w + GAP;
-    maxD = Math.max(maxD, g.userData.size.D);
+  const cols = Math.ceil(Math.sqrt(groups.length));
+  const rows = Math.ceil(groups.length / cols);
+  const cellW = Math.max(...groups.map(g => g.userData.size.W));
+  const cellD = Math.max(...groups.map(g => g.userData.size.D));
+  const totalW = cols * cellW + (cols - 1) * GAP;
+  const totalD = rows * cellD + (rows - 1) * GAP;
+
+  groups.forEach((g, i) => {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    const nodesInRow = Math.min(cols, groups.length - row * cols);
+    const rowW = nodesInRow * cellW + (nodesInRow - 1) * GAP;
+    g.position.set(
+      -rowW / 2 + cellW / 2 + col * (cellW + GAP),
+      0,
+      -totalD / 2 + cellD / 2 + row * (cellD + GAP)
+    );
     worldGroup.add(g);
     nodeGroups.push(g);
   });
@@ -477,7 +486,7 @@ function buildWorld() {
   // plataforma verde
   const MARGIN = 8.5;
   const pw = totalW + MARGIN * 2;
-  const pd = maxD + MARGIN * 2;
+  const pd = totalD + MARGIN * 2;
   const PH = 2.6;
 
   platformMesh = new THREE.Mesh(roundedBox(pw, PH, pd, 3.5), mat(COLORS.platformTop));
@@ -489,29 +498,37 @@ function buildWorld() {
   skirt.position.y = -PH - 1.0;
   platform.add(skirt);
 
-  // camino de arena delante de los portones
-  const roadZ = maxD / 2 + 6.5;
-  const road = new THREE.Mesh(roundedBox(totalW + 6, 0.12, 4.6, 1.2), mat(COLORS.path));
-  road.position.set(0, 0.0, roadZ);
-  road.receiveShadow = true;
-  worldGroup.add(road);
-  nodeGroups.forEach(g => {
-    const hd = g.userData.size.D / 2;
-    const len = roadZ - hd - 1.0;
-    if (len <= 0.5) return;
-    const spur = new THREE.Mesh(roundedBox(3.6, 0.12, len, 1.0), mat(COLORS.path));
-    spur.position.set(g.position.x, 0.0, hd + 1.0 + len / 2);
-    spur.receiveShadow = true;
-    worldGroup.add(spur);
-  });
+  // un camino de arena por cada fila, delante de sus portones
+  let frontRoadZ = 0;
+  for (let row = 0; row < rows; row++) {
+    const rowZ = -totalD / 2 + cellD / 2 + row * (cellD + GAP);
+    const roadZ = rowZ + cellD / 2 + GAP / 2;
+    frontRoadZ = roadZ;
 
-  decorate(pw, pd, maxD, roadZ);
-  updateCameraFraming(pw);
+    const road = new THREE.Mesh(roundedBox(totalW + 6, 0.12, 4.6, 1.2), mat(COLORS.path));
+    road.position.set(0, 0.0, roadZ);
+    road.receiveShadow = true;
+    worldGroup.add(road);
+
+    groups.slice(row * cols, Math.min((row + 1) * cols, groups.length)).forEach(g => {
+      const hd = g.userData.size.D / 2;
+      const gateZ = g.position.z + hd + 1.0;
+      const len = roadZ - gateZ;
+      if (len <= 0.5) return;
+      const spur = new THREE.Mesh(roundedBox(3.6, 0.12, len, 1.0), mat(COLORS.path));
+      spur.position.set(g.position.x, 0.0, gateZ + len / 2);
+      spur.receiveShadow = true;
+      worldGroup.add(spur);
+    });
+  }
+
+  decorate(pw, pd, frontRoadZ);
+  updateCameraFraming(Math.max(pw, pd));
   refreshUI();
 }
 
 // árboles, arbustos y rocas por el césped
-function decorate(pw, pd, maxD, roadZ) {
+function decorate(pw, pd, roadZ) {
   const r = rng(4242);
 
   function tree(x, z, s) {

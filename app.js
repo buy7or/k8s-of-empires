@@ -98,8 +98,57 @@ rim.position.set(-60, 40, -40);
 scene.add(rim);
 
 /* ---------------- HELPERS ---------------- */
+function createSurfaceTexture() {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
+
+  // Variaciones tonales deterministas: manchas suaves y grano muy fino.
+  let seed = 918273;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+
+  for (let i = 0; i < 90; i++) {
+    const x = random() * size;
+    const y = random() * size;
+    const radius = 1.5 + random() * 5;
+    const cool = random() > 0.48;
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    gradient.addColorStop(0, cool ? 'rgba(96,132,176,.09)' : 'rgba(188,137,82,.075)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+  }
+
+  for (let i = 0; i < 170; i++) {
+    const alpha = 0.03 + random() * 0.04;
+    ctx.fillStyle = random() > 0.45
+      ? `rgba(43,62,86,${alpha})`
+      : `rgba(181,124,70,${alpha * 0.8})`;
+    const grain = 3.2 + random() * 4.8;
+    ctx.fillRect(random() * size, random() * size, grain, grain);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1.6, 1.6);
+  texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+  return texture;
+}
+
+const surfaceTexture = createSurfaceTexture();
+
 function mat(color, opts = {}) {
   return new THREE.MeshLambertMaterial({ color, ...opts });
+}
+
+function texturedMat(color, opts = {}) {
+  return new THREE.MeshLambertMaterial({ color, map: surfaceTexture, ...opts });
 }
 
 // caja con esquinas redondeadas (base en y=0, crece hacia +Y)
@@ -266,7 +315,7 @@ function buildZone(ns, pods, node) {
   border.receiveShadow = true;
   g.add(border);
   // relleno oscuro (deja ver el borde)
-  const inner = new THREE.Mesh(roundedBox(w - 0.5, 0.16, d - 0.5, 0.75), mat(COLORS.floorDark));
+  const inner = new THREE.Mesh(roundedBox(w - 0.5, 0.16, d - 0.5, 0.75), texturedMat(COLORS.floorDark));
   inner.position.y = 0.03;
   inner.receiveShadow = true;
   g.add(inner);
@@ -297,7 +346,9 @@ function buildZone(ns, pods, node) {
 function crenellatedWall(len, horizontal, gapWidth = 0) {
   const grp = new THREE.Group();
   const H = 4.0, T = 0.9;
-  const body = horizontal ? box(len, H, T, COLORS.wall) : box(T, H, len, COLORS.wall);
+  const body = horizontal
+    ? box(len, H, T, COLORS.wall, { map: surfaceTexture })
+    : box(T, H, len, COLORS.wall, { map: surfaceTexture });
   body.position.y = H / 2;
   body.castShadow = true; body.receiveShadow = true;
   grp.add(body);
@@ -309,8 +360,8 @@ function crenellatedWall(len, horizontal, gapWidth = 0) {
     const off = start + i * step;
     if (Math.abs(off) < gapWidth / 2) continue;
     const m = horizontal
-      ? box(mW, 0.8, T, COLORS.wallTop)
-      : box(T, 0.8, mW, COLORS.wallTop);
+      ? box(mW, 0.8, T, COLORS.wallTop, { map: surfaceTexture })
+      : box(T, 0.8, mW, COLORS.wallTop, { map: surfaceTexture });
     m.position.set(horizontal ? off : 0, H + 0.4, horizontal ? 0 : off);
     m.castShadow = true;
     grp.add(m);
@@ -321,13 +372,13 @@ function crenellatedWall(len, horizontal, gapWidth = 0) {
 function cornerTower() {
   const g = new THREE.Group();
   const H = 5.4, R = 1.35;
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(R, R * 1.06, H, 14), mat(COLORS.wall));
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(R, R * 1.06, H, 14), texturedMat(COLORS.wall));
   body.position.y = H / 2; body.castShadow = true; body.receiveShadow = true;
   g.add(body);
   // anillo de almenas
   for (let i = 0; i < 10; i++) {
     const a = (i / 10) * Math.PI * 2;
-    const m = box(0.36, 0.55, 0.36, COLORS.wallTop);
+    const m = box(0.36, 0.55, 0.36, COLORS.wallTop, { map: surfaceTexture });
     m.position.set(Math.cos(a) * (R - 0.1), H + 0.27, Math.sin(a) * (R - 0.1));
     g.add(m);
   }
@@ -371,7 +422,7 @@ function buildNode(node) {
   g.userData.size = { W, D };
 
   // suelo interior oscuro
-  const floor = new THREE.Mesh(roundedBox(W - 0.6, 0.3, D - 0.6, 1.2), mat(COLORS.floor));
+  const floor = new THREE.Mesh(roundedBox(W - 0.6, 0.3, D - 0.6, 1.2), texturedMat(COLORS.floor));
   floor.position.y = 0;
   floor.receiveShadow = true;
   floor.userData.pick = { type: 'node', node };
@@ -489,12 +540,12 @@ function buildWorld() {
   const pd = totalD + MARGIN * 2;
   const PH = 2.6;
 
-  platformMesh = new THREE.Mesh(roundedBox(pw, PH, pd, 3.5), mat(COLORS.platformTop));
+  platformMesh = new THREE.Mesh(roundedBox(pw, PH, pd, 3.5), texturedMat(COLORS.platformTop));
   platformMesh.position.y = -PH;
   platformMesh.receiveShadow = true;
   platform.add(platformMesh);
   // faldón inferior algo más oscuro para dar grosor
-  const skirt = new THREE.Mesh(roundedBox(pw - 0.7, 1.1, pd - 0.7, 3.2), mat(COLORS.platformEdge));
+  const skirt = new THREE.Mesh(roundedBox(pw - 0.7, 1.1, pd - 0.7, 3.2), texturedMat(COLORS.platformEdge));
   skirt.position.y = -PH - 1.0;
   platform.add(skirt);
 
@@ -505,7 +556,7 @@ function buildWorld() {
     const roadZ = rowZ + cellD / 2 + GAP / 2;
     frontRoadZ = roadZ;
 
-    const road = new THREE.Mesh(roundedBox(totalW + 6, 0.12, 4.6, 1.2), mat(COLORS.path));
+    const road = new THREE.Mesh(roundedBox(totalW + 6, 0.12, 4.6, 1.2), texturedMat(COLORS.path));
     road.position.set(0, 0.0, roadZ);
     road.receiveShadow = true;
     worldGroup.add(road);
@@ -515,7 +566,7 @@ function buildWorld() {
       const gateZ = g.position.z + hd + 1.0;
       const len = roadZ - gateZ;
       if (len <= 0.5) return;
-      const spur = new THREE.Mesh(roundedBox(3.6, 0.12, len, 1.0), mat(COLORS.path));
+      const spur = new THREE.Mesh(roundedBox(3.6, 0.12, len, 1.0), texturedMat(COLORS.path));
       spur.position.set(g.position.x, 0.0, gateZ + len / 2);
       spur.receiveShadow = true;
       worldGroup.add(spur);

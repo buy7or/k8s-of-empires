@@ -16,8 +16,8 @@ canvas { display: block; }
   background: var(--card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .cluster-card {
@@ -26,7 +26,7 @@ canvas { display: block; }
   top: 24px;
   min-width: 430px;
   padding: 18px 22px;
-  border-radius: 18px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -50,7 +50,7 @@ h1 { margin: 0 0 9px; font-size: 27px; letter-spacing: -.03em; }
   top: 24px;
   width: 360px;
   padding: 18px 20px;
-  border-radius: 18px;
+  border-radius: 8px;
 }
 .namespace-card h2 { font-size: 15px; margin: 0 0 13px; }
 .namespace-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 20px; }
@@ -62,7 +62,7 @@ h1 { margin: 0 0 9px; font-size: 27px; letter-spacing: -.03em; }
   left: 50%; bottom: 22px;
   transform: translateX(-50%);
   width: min(1080px, calc(100% - 48px));
-  border-radius: 20px;
+  border-radius: 10px;
   padding: 17px 22px;
   display:grid;
   grid-template-columns: repeat(5, 1fr);
@@ -79,10 +79,10 @@ h1 { margin: 0 0 9px; font-size: 27px; letter-spacing: -.03em; }
 
 .info-panel {
   position:absolute;
-  right:28px;
-  top:154px;
+  right:404px;
+  top:24px;
   width:310px;
-  border-radius:18px;
+  border-radius:8px;
   padding:18px 20px 20px;
   opacity:0;
   transform: translateY(-8px) scale(.98);

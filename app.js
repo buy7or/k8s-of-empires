@@ -58,6 +58,10 @@ const nodeData = [
     pod("grafana", "monitoring", 2),
     pod("checkout-ui", "frontend", 1),
     pod("redis-cache", "database", 1)
+  ]},
+  { name: "node-04", region: "eu-west-1a", pods: [
+    pod("api-gateway", "default", 2), pod("auth-service", "default", 1),
+    pod("worker-queue", "backend", 2)
   ]}
 ];
 

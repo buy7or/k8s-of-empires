@@ -59,6 +59,8 @@ h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -.035em; }
 .cluster-meta b { color: #305fb7; }
 .healthy { color: #2da664; font-weight: 700; }
 .healthy i { display:inline-block; width:10px; height:10px; border-radius:50%; background:#35c878; margin-right:6px; box-shadow:0 0 0 5px rgba(53,200,120,.12); }
+.healthy.degraded { color:#c94646; }
+.healthy.degraded i { background:#dc4c4c; box-shadow:0 0 0 5px rgba(220,76,76,.12); }
 
 .namespace-card {
   position: absolute;
@@ -113,6 +115,7 @@ h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -.035em; }
 .stats-bar strong { display:block; font-size:21px; line-height:1; }
 .stats-bar em { margin-top:5px; font-size:12px; color:#65a66c; }
 .status-text { color:#39af65; font-size:19px !important; }
+.status-text.degraded { color:#c94646; }
 
 .info-panel {
   position:absolute;

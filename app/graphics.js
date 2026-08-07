@@ -159,8 +159,15 @@ function podPillSprite(n) {
 
 /* ---------------- CONSTRUCTORES ---------------- */
 
-// casita: muros claros + tejado del color del namespace
-function buildHouse(p) {
+function markPodMeshes(group, podData) {
+  group.traverse(object => {
+    if (object.isMesh) object.userData.pick = { type: 'pod', pod: podData };
+  });
+  return group;
+}
+
+// Running: casa terminada y operativa.
+function buildRunningHouse(p) {
   const g = new THREE.Group();
   const col = NAMESPACES[p.ns] ?? 0x94a3b8;
   const w = 2.5, d = 2.35, wallH = 1.75;
@@ -197,8 +204,110 @@ function buildHouse(p) {
   ch.castShadow = true;
   g.add(ch);
 
-  g.traverse(o => { if (o.isMesh) o.userData.pick = { type: 'pod', pod: p }; });
-  return g;
+  return markPodMeshes(g, p);
+}
+
+// Pending: estructura todavía en construcción.
+function buildPendingHouse(p) {
+  const g = new THREE.Group();
+  const w = 2.5, d = 2.35;
+
+  const foundation = box(w, 0.25, d, COLORS.pendingDark);
+  foundation.position.y = 0.125;
+  foundation.receiveShadow = true;
+  g.add(foundation);
+
+  // Pilares y vigas hacen que se reconozca incluso sin depender del color.
+  [[-1, -0.9], [1, -0.9], [-1, 0.9], [1, 0.9]].forEach(([x, z]) => {
+    const post = box(0.18, 1.75, 0.18, COLORS.wood);
+    post.position.set(x, 1.1, z);
+    post.castShadow = true;
+    g.add(post);
+  });
+  [-0.9, 0.9].forEach(z => {
+    const beam = box(2.2, 0.18, 0.18, COLORS.woodDark);
+    beam.position.set(0, 1.92, z);
+    g.add(beam);
+  });
+
+  const partialWall = box(1.35, 0.85, d - 0.3, COLORS.houseWallAlt);
+  partialWall.position.set(-0.48, 0.68, 0);
+  partialWall.castShadow = true;
+  g.add(partialWall);
+
+  const roofFrame = gableRoof(w + 0.35, d + 0.35, 1.55, COLORS.pending);
+  roofFrame.position.y = 2;
+  roofFrame.material = new THREE.MeshLambertMaterial({ color: COLORS.pending, wireframe: true });
+  g.add(roofFrame);
+
+  const marker = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 10, 8),
+    mat(COLORS.pending, { emissive: COLORS.pendingDark, emissiveIntensity: 0.35 })
+  );
+  marker.position.set(0, 3.75, 0);
+  g.add(marker);
+
+  return markPodMeshes(g, p);
+}
+
+// Error: edificio dañado, alarma y humo para agrupar cualquier fallo técnico.
+function buildErrorHouse(p) {
+  const g = new THREE.Group();
+  const namespaceColor = NAMESPACES[p.ns] ?? 0x94a3b8;
+  const w = 2.5, d = 2.35, wallH = 1.6;
+
+  const body = box(w, wallH, d, 0xc8b9b4);
+  body.position.y = wallH / 2;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  g.add(body);
+
+  const roof = gableRoof(w + 0.4, d + 0.4, 1.65, COLORS.errorDark);
+  roof.position.set(0.12, wallH + 0.05, 0);
+  roof.rotation.z = -0.1;
+  g.add(roof);
+
+  const door = box(0.56, 0.78, 0.09, COLORS.woodDark);
+  door.position.set(0, 0.39, d / 2 + 0.02);
+  g.add(door);
+
+  // Grietas frontales.
+  [[-0.65, 1.05, -0.35], [0.72, 0.82, 0.3]].forEach(([x, y, angle]) => {
+    const crack = box(0.08, 0.68, 0.1, COLORS.errorDark);
+    crack.position.set(x, y, d / 2 + 0.04);
+    crack.rotation.z = angle;
+    g.add(crack);
+  });
+
+  const alarm = new THREE.Mesh(
+    new THREE.SphereGeometry(0.2, 10, 8),
+    mat(COLORS.error, { emissive: COLORS.error, emissiveIntensity: 0.8 })
+  );
+  alarm.position.set(-0.72, wallH + 1.6, 0);
+  g.add(alarm);
+
+  // El pequeño estandarte conserva el color del namespace.
+  const flag = box(0.75, 0.34, 0.06, namespaceColor);
+  flag.position.set(0.38, wallH + 1.25, d / 2 + 0.12);
+  g.add(flag);
+
+  [0, 1, 2].forEach(i => {
+    const smoke = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(0.25 + i * 0.08, 1),
+      mat(COLORS.smoke, { transparent: true, opacity: 0.72 - i * 0.14 })
+    );
+    smoke.position.set(0.72 + i * 0.12, wallH + 1.7 + i * 0.48, -0.3);
+    smoke.scale.set(1.1, 0.85, 1);
+    g.add(smoke);
+  });
+
+  return markPodMeshes(g, p);
+}
+
+function buildHouse(p) {
+  if (p.status === 'Pending') return buildPendingHouse(p);
+  if (p.status === 'Error') return buildErrorHouse(p);
+  return buildRunningHouse(p);
 }
 
 // zona de namespace: rectángulo redondeado con borde de color

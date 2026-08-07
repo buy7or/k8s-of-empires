@@ -20,7 +20,7 @@
         <div class="cluster-meta">
           <span><b id="nodeCount">3</b> Nodes</span>
           <span><b id="podCount">0</b> Pods</span>
-          <span class="healthy"><i></i> Healthy</span>
+          <span id="clusterHealth" class="healthy"><i></i><span id="clusterHealthText">Healthy</span></span>
         </div>
       </div>
     </header>
@@ -38,11 +38,11 @@
     </section>
 
     <footer class="stats-bar glass-card">
-      <article><span class="stat-icon">⬡</span><div><small>Pods</small><strong id="statPods">0</strong><em>Running</em></div></article>
+      <article><span class="stat-icon">⬡</span><div><small>Pods</small><strong id="statPods">0</strong><em id="statPodsState">Running</em></div></article>
       <article><span class="stat-icon">▦</span><div><small>Nodes</small><strong id="statNodes">3</strong><em>All Healthy</em></div></article>
       <article><span class="stat-icon">◫</span><div><small>Namespaces</small><strong id="statNamespaces">0</strong><em>Active</em></div></article>
       <article><span class="stat-icon">◈</span><div><small>Containers</small><strong id="statContainers">0</strong><em>Running</em></div></article>
-      <article><span class="stat-icon">✓</span><div><small>Status</small><strong class="status-text">Healthy</strong><em>All systems normal</em></div></article>
+      <article><span class="stat-icon">✓</span><div><small>Status</small><strong id="statStatus" class="status-text">Healthy</strong><em id="statStatusDetail">All systems normal</em></div></article>
     </footer>
 
     <div class="help">Arrastra para girar · rueda para zoom · clic para inspeccionar</div>

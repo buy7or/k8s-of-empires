@@ -2,8 +2,12 @@
 function refreshUI() {
   const pods = nodeData.reduce((a, n) => a + n.pods.length, 0);
   const containers = nodeData.reduce((a, n) => a + n.pods.reduce((b, p) => b + p.containers, 0), 0);
+  const statusCounts = { Running: 0, Pending: 0, Error: 0 };
   const nss = new Set();
-  nodeData.forEach(n => n.pods.forEach(p => nss.add(p.ns)));
+  nodeData.forEach(n => n.pods.forEach(p => {
+    nss.add(p.ns);
+    statusCounts[p.status] = (statusCounts[p.status] || 0) + 1;
+  }));
 
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   set('nodeCount', nodeData.length);
@@ -12,6 +16,21 @@ function refreshUI() {
   set('statNodes', nodeData.length);
   set('statNamespaces', nss.size);
   set('statContainers', containers);
+  set('statPodsState', `${statusCounts.Running} Running · ${statusCounts.Pending} Pending · ${statusCounts.Error} Error`);
+
+  const degraded = statusCounts.Error > 0;
+  const waiting = !degraded && statusCounts.Pending > 0;
+  const healthText = degraded ? 'Degraded' : waiting ? 'Pending' : 'Healthy';
+  const healthDetail = degraded
+    ? `${statusCounts.Error} pods con errores`
+    : waiting
+      ? `${statusCounts.Pending} pods pendientes`
+      : 'All systems normal';
+  set('clusterHealthText', healthText);
+  set('statStatus', healthText);
+  set('statStatusDetail', healthDetail);
+  document.getElementById('clusterHealth')?.classList.toggle('degraded', degraded);
+  document.getElementById('statStatus')?.classList.toggle('degraded', degraded);
 
   const legend = document.getElementById('namespaceLegend');
   if (legend) {
@@ -80,13 +99,15 @@ function showInfo(pick) {
     const p = pick.pod;
     infoKind.textContent = 'Pod';
     infoTitle.textContent = p.name;
+    row('Estado', p.status);
+    row('Ready', p.ready ? 'Sí' : 'No');
+    if (p.reason) row('Detalle', p.reason);
     row('Namespace', p.ns);
     row('Contenedores', p.containers);
     row('Imagen', p.image);
     row('Puerto', ':' + p.port);
     const owner = nodeData.find(n => n.pods.includes(p));
     row('Nodo', owner ? owner.name : '—');
-    row('Estado', 'Running');
   } else if (pick.type === 'namespace') {
     infoKind.textContent = 'Namespace';
     infoTitle.textContent = pick.ns;

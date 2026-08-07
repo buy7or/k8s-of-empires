@@ -13,14 +13,23 @@
   <main id="app">
     <div id="scene"></div>
 
-    <header class="cluster-card glass-card">
-      <div class="k8s-logo">☸</div>
-      <div>
-        <h1>Kubernetes Cluster</h1>
-        <div class="cluster-meta">
-          <span><b id="nodeCount">3</b> Nodes</span>
-          <span><b id="podCount">0</b> Pods</span>
-          <span id="clusterHealth" class="healthy"><i></i><span id="clusterHealthText">Healthy</span></span>
+    <header id="clusterCard" class="cluster-card glass-card">
+      <div class="cluster-summary">
+        <div class="k8s-logo">☸</div>
+        <div class="cluster-heading">
+          <h1>Kubernetes Cluster</h1>
+        </div>
+        <button id="clusterToggle" class="cluster-toggle" type="button" aria-expanded="false" aria-controls="clusterDetails" aria-label="Mostrar información del clúster" title="Mostrar información del clúster">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+      <div id="clusterDetails" class="cluster-details">
+        <div class="cluster-details-inner">
+          <div class="cluster-explorer-heading">
+            <span>Cluster resources</span>
+            <small>Explorador técnico</small>
+          </div>
+          <div id="clusterExplorer" class="cluster-explorer"></div>
         </div>
       </div>
     </header>
@@ -41,14 +50,17 @@
     </section>
 
     <footer class="stats-bar glass-card">
-      <article><span class="stat-icon">⬡</span><div><small>Pods</small><strong id="statPods">0</strong><em id="statPodsState">Running</em></div></article>
-      <article><span class="stat-icon">▦</span><div><small>Nodes</small><strong id="statNodes">3</strong><em>All Healthy</em></div></article>
-      <article><span class="stat-icon">◫</span><div><small>Namespaces</small><strong id="statNamespaces">0</strong><em>Active</em></div></article>
-      <article><span class="stat-icon">◈</span><div><small>Containers</small><strong id="statContainers">0</strong><em>Running</em></div></article>
-      <article><span class="stat-icon">✓</span><div><small>Status</small><strong id="statStatus" class="status-text">Healthy</strong><em id="statStatusDetail">All systems normal</em></div></article>
+      <article><span class="stat-icon">⬡</span><div><small>Pods</small><strong id="statPods">0</strong></div></article>
+      <article><span class="stat-icon">▦</span><div><small>Nodes</small><strong id="statNodes">3</strong></div></article>
+      <article><span class="stat-icon">◫</span><div><small>Namespaces</small><strong id="statNamespaces">0</strong></div></article>
+      <article><span class="stat-icon">◈</span><div><small>Deployments</small><strong id="statDeployments">0</strong></div></article>
+      <article>
+        <span id="statStatusIcon" class="stat-icon status-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6h5"/></svg>
+        </span>
+        <div><small>Status</small><strong id="statStatus" class="status-text">Healthy</strong></div>
+      </article>
     </footer>
-
-    <div class="help">Arrastra para girar · rueda para zoom · clic para inspeccionar</div>
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

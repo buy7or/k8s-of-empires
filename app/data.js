@@ -1,8 +1,10 @@
 let podSeq = 0;
 
 function pod(name, ns, containers = 1, status = 'Running', reason = null) {
+  const podName = name || `pod-${++podSeq}`;
   return {
-    name: name || `pod-${++podSeq}`,
+    name: podName,
+    deployment: podName,
     ns,
     containers,
     status,

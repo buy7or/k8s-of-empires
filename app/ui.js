@@ -11,9 +11,171 @@ function visibilityIcon(visible) {
       </svg>`;
 }
 
+const clusterCard = document.getElementById('clusterCard');
+const clusterToggle = document.getElementById('clusterToggle');
+clusterToggle?.addEventListener('click', () => {
+  const expanded = clusterToggle.getAttribute('aria-expanded') !== 'true';
+  clusterToggle.setAttribute('aria-expanded', String(expanded));
+  clusterToggle.setAttribute('aria-label', `${expanded ? 'Ocultar' : 'Mostrar'} información del clúster`);
+  clusterToggle.title = clusterToggle.getAttribute('aria-label');
+  clusterCard?.classList.toggle('is-expanded', expanded);
+});
+
+function resourceStatus(pods) {
+  if (pods.some(p => p.status === 'Error')) return 'Error';
+  if (pods.some(p => p.status === 'Pending')) return 'Pending';
+  return 'Running';
+}
+
+function technicalDetails(label, badge, className = 'technical-item') {
+  const details = document.createElement('details');
+  details.className = className;
+  const summary = document.createElement('summary');
+  const name = document.createElement('span');
+  name.textContent = label;
+  const count = document.createElement('span');
+  count.className = 'technical-count';
+  count.textContent = badge;
+  summary.append(name, count);
+  details.appendChild(summary);
+  return details;
+}
+
+function technicalMeta(entries) {
+  const meta = document.createElement('div');
+  meta.className = 'technical-meta';
+  entries.forEach(([label, value]) => {
+    const item = document.createElement('span');
+    const key = document.createElement('b');
+    key.textContent = `${label}: `;
+    item.append(key, String(value));
+    meta.appendChild(item);
+  });
+  return meta;
+}
+
+function technicalPodRow(podData, node) {
+  const row = document.createElement('div');
+  row.className = 'technical-pod-row';
+
+  const name = document.createElement('span');
+  name.className = 'technical-pod-name';
+  name.textContent = podData.name;
+  if (podData.reason) {
+    const reason = document.createElement('small');
+    reason.textContent = podData.reason;
+    name.appendChild(reason);
+  }
+
+  const nodeName = document.createElement('span');
+  nodeName.className = 'technical-pod-node';
+  nodeName.textContent = node.name;
+
+  const state = document.createElement('span');
+  state.className = `technical-pod-state status-${podData.status.toLowerCase()}`;
+  state.innerHTML = '<i></i>';
+  state.append(podData.status);
+  row.append(name, nodeName, state);
+  return row;
+}
+
+function deploymentDetails(deployment) {
+  const pods = deployment.entries.map(entry => entry.pod);
+  const status = resourceStatus(pods);
+  const details = technicalDetails(deployment.name, status);
+  const badge = details.querySelector('.technical-count');
+  badge.className = `technical-status status-${status.toLowerCase()}`;
+  const body = document.createElement('div');
+  body.className = 'technical-item-body';
+  const images = [...new Set(pods.map(p => p.image))];
+  body.appendChild(technicalMeta([
+    ['Namespace', deployment.namespace],
+    ['Pods', pods.length],
+    ['Ready', `${pods.filter(p => p.ready).length}/${pods.length}`],
+    ['Containers', pods.reduce((total, p) => total + p.containers, 0)],
+    ['Images', images.join(', ')]
+  ]));
+  const podList = document.createElement('div');
+  podList.className = 'technical-pods';
+  deployment.entries.forEach(entry => podList.appendChild(technicalPodRow(entry.pod, entry.node)));
+  body.appendChild(podList);
+  details.appendChild(body);
+  return details;
+}
+
+function renderClusterExplorer() {
+  const explorer = document.getElementById('clusterExplorer');
+  if (!explorer) return;
+  explorer.innerHTML = '';
+
+  const deployments = new Map();
+  nodeData.forEach(node => node.pods.forEach(podData => {
+    const key = `${podData.ns}/${podData.deployment}`;
+    if (!deployments.has(key)) {
+      deployments.set(key, { name: podData.deployment, namespace: podData.ns, entries: [] });
+    }
+    deployments.get(key).entries.push({ pod: podData, node });
+  }));
+  const deploymentList = [...deployments.values()].sort((a, b) => a.name.localeCompare(b.name));
+
+  const nodesGroup = technicalDetails('Nodes', nodeData.length, 'technical-group');
+  const nodesChildren = document.createElement('div');
+  nodesChildren.className = 'technical-children';
+  nodeData.forEach(node => {
+    const item = technicalDetails(node.name, 'Ready');
+    const body = document.createElement('div');
+    body.className = 'technical-item-body';
+    body.appendChild(technicalMeta([
+      ['IP', node.ip],
+      ['Pods', node.pods.length],
+      ['Deployments', new Set(node.pods.map(p => p.deployment)).size],
+      ['Containers', node.pods.reduce((total, p) => total + p.containers, 0)]
+    ]));
+    const podList = document.createElement('div');
+    podList.className = 'technical-pods';
+    node.pods.forEach(podData => podList.appendChild(technicalPodRow(podData, node)));
+    body.appendChild(podList);
+    item.appendChild(body);
+    nodesChildren.appendChild(item);
+  });
+  nodesGroup.appendChild(nodesChildren);
+
+  const deploymentsGroup = technicalDetails('Deployments', deploymentList.length, 'technical-group');
+  const deploymentsChildren = document.createElement('div');
+  deploymentsChildren.className = 'technical-children';
+  deploymentList.forEach(deployment => deploymentsChildren.appendChild(deploymentDetails(deployment)));
+  deploymentsGroup.appendChild(deploymentsChildren);
+
+  const namespaces = [...new Set(nodeData.flatMap(node => node.pods.map(p => p.ns)))].sort();
+  const namespacesGroup = technicalDetails('Namespaces', namespaces.length, 'technical-group');
+  const namespacesChildren = document.createElement('div');
+  namespacesChildren.className = 'technical-children';
+  namespaces.forEach(namespace => {
+    const namespaceDeployments = deploymentList.filter(deployment => deployment.namespace === namespace);
+    const podCount = namespaceDeployments.reduce((total, deployment) => total + deployment.entries.length, 0);
+    const item = technicalDetails(namespace, `${podCount} pods`);
+    const body = document.createElement('div');
+    body.className = 'technical-item-body';
+    body.appendChild(technicalMeta([
+      ['Deployments', namespaceDeployments.length],
+      ['Nodes', new Set(namespaceDeployments.flatMap(d => d.entries.map(entry => entry.node.name))).size]
+    ]));
+    const nested = document.createElement('div');
+    nested.className = 'technical-pods';
+    namespaceDeployments.forEach(deployment => nested.appendChild(deploymentDetails(deployment)));
+    body.appendChild(nested);
+    item.appendChild(body);
+    namespacesChildren.appendChild(item);
+  });
+  namespacesGroup.appendChild(namespacesChildren);
+
+  explorer.append(nodesGroup, deploymentsGroup, namespacesGroup);
+}
+
 function refreshUI() {
   const pods = nodeData.reduce((a, n) => a + n.pods.length, 0);
   const containers = nodeData.reduce((a, n) => a + n.pods.reduce((b, p) => b + p.containers, 0), 0);
+  const deployments = new Set(nodeData.flatMap(n => n.pods.map(p => p.deployment))).size;
   const statusCounts = { Running: 0, Pending: 0, Error: 0 };
   const nss = new Set();
   nodeData.forEach(n => n.pods.forEach(p => {
@@ -22,27 +184,18 @@ function refreshUI() {
   }));
 
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('nodeCount', nodeData.length);
-  set('podCount', pods);
   set('statPods', pods);
   set('statNodes', nodeData.length);
   set('statNamespaces', nss.size);
-  set('statContainers', containers);
-  set('statPodsState', `${statusCounts.Running} Running · ${statusCounts.Pending} Pending · ${statusCounts.Error} Error`);
+  set('statDeployments', deployments);
+  renderClusterExplorer();
 
   const degraded = statusCounts.Error > 0;
   const waiting = !degraded && statusCounts.Pending > 0;
   const healthText = degraded ? 'Degraded' : waiting ? 'Pending' : 'Healthy';
-  const healthDetail = degraded
-    ? `${statusCounts.Error} pods con errores`
-    : waiting
-      ? `${statusCounts.Pending} pods pendientes`
-      : 'All systems normal';
-  set('clusterHealthText', healthText);
   set('statStatus', healthText);
-  set('statStatusDetail', healthDetail);
-  document.getElementById('clusterHealth')?.classList.toggle('degraded', degraded);
   document.getElementById('statStatus')?.classList.toggle('degraded', degraded);
+  document.getElementById('statStatusIcon')?.classList.toggle('degraded', degraded);
 
   const legend = document.getElementById('namespaceLegend');
   if (legend) {
@@ -137,6 +290,7 @@ function showInfo(pick) {
     row('Estado', p.status);
     row('Ready', p.ready ? 'Sí' : 'No');
     if (p.reason) row('Detalle', p.reason);
+    row('Deployment', p.deployment);
     row('Namespace', p.ns);
     row('Contenedores', p.containers);
     row('Imagen', p.image);

@@ -95,6 +95,35 @@ h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -.035em; }
 .namespace-toggle:hover { background:#e6effb; color:#315d9e; }
 .namespace-toggle:focus-visible { outline:2px solid #4a8cff; outline-offset:2px; }
 .namespace-toggle[aria-pressed="true"] { background:#f1f3f6; color:#8a94a4; }
+.filter-divider { height:1px; margin:15px 0 13px; background:rgba(120,145,180,.15); }
+.status-filters { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
+.status-filter {
+  display:flex;
+  align-items:center;
+  min-width:0;
+  gap:5px;
+  border:1px solid rgba(90,115,150,.18);
+  border-radius:7px;
+  padding:7px 7px;
+  background:rgba(248,250,253,.82);
+  color:#52617a;
+  font:600 10px Inter, system-ui, sans-serif;
+  cursor:pointer;
+  transition:background .18s ease, border-color .18s ease, opacity .18s ease;
+}
+.status-filter:hover { background:#edf3fb; border-color:rgba(74,140,255,.3); }
+.status-filter:focus-visible { outline:2px solid #4a8cff; outline-offset:2px; }
+.status-filter-dot { flex:0 0 auto; width:8px; height:8px; border-radius:50%; }
+.status-running .status-filter-dot { background:#35c878; }
+.status-pending .status-filter-dot { background:#f2b84b; }
+.status-error .status-filter-dot { background:#dc4c4c; }
+.status-filter-label { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.status-filter-count { color:#8290a6; font-weight:700; }
+.status-filter-eye { display:grid; place-items:center; margin-left:auto; }
+.status-filter-eye svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.status-filter.is-hidden { background:#f1f3f6; color:#929cac; }
+.status-filter.is-hidden .status-filter-dot,
+.status-filter.is-hidden .status-filter-label { opacity:.38; }
 
 .stats-bar {
   position: absolute;

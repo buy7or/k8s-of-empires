@@ -9,6 +9,7 @@ let platformMesh = null;
 const decoGroup = new THREE.Group();
 scene.add(decoGroup);
 const hiddenNamespaces = new Set();
+const hiddenPodStatuses = new Set();
 
 function isNamespaceVisible(namespace) {
   return !hiddenNamespaces.has(namespace);
@@ -28,6 +29,27 @@ function applyNamespaceVisibility() {
   worldGroup.traverse(object => {
     const namespace = object.userData.namespaceZone;
     if (namespace) object.visible = isNamespaceVisible(namespace);
+  });
+}
+
+function isPodStatusVisible(status) {
+  return !hiddenPodStatuses.has(status);
+}
+
+function setPodStatusVisibility(status, visible) {
+  if (visible) hiddenPodStatuses.delete(status);
+  else hiddenPodStatuses.add(status);
+
+  worldGroup.traverse(object => {
+    if (object.userData.podStatus === status) object.visible = visible;
+  });
+  hideInfo();
+}
+
+function applyPodStatusVisibility() {
+  worldGroup.traverse(object => {
+    const status = object.userData.podStatus;
+    if (status) object.visible = isPodStatusVisible(status);
   });
 }
 
@@ -122,6 +144,7 @@ function buildWorld() {
 
   decorate(pw, pd, frontRoadZ, platformZ);
   applyNamespaceVisibility();
+  applyPodStatusVisibility();
   updateCameraFraming(Math.max(pw, pd), platformZ);
   refreshUI();
 }

@@ -1,4 +1,16 @@
 /* ---------------- UI ---------------- */
+function visibilityIcon(visible) {
+  return visible
+    ? `<svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
+        <circle cx="12" cy="12" r="2.7"/>
+      </svg>`
+    : `<svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 3l18 18"/>
+        <path d="M10.6 6.1A10 10 0 0 1 12 6c6 0 9.5 6 9.5 6a15 15 0 0 1-2.1 2.8M6.2 6.2C3.8 8 2.5 12 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 3-.5M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+      </svg>`;
+}
+
 function refreshUI() {
   const pods = nodeData.reduce((a, n) => a + n.pods.length, 0);
   const containers = nodeData.reduce((a, n) => a + n.pods.reduce((b, p) => b + p.containers, 0), 0);
@@ -48,15 +60,7 @@ function refreshUI() {
 
       const syncToggle = () => {
         const visible = isNamespaceVisible(ns);
-        toggle.innerHTML = visible
-          ? `<svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
-              <circle cx="12" cy="12" r="2.7"/>
-            </svg>`
-          : `<svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 3l18 18"/>
-              <path d="M10.6 6.1A10 10 0 0 1 12 6c6 0 9.5 6 9.5 6a15 15 0 0 1-2.1 2.8M6.2 6.2C3.8 8 2.5 12 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 3-.5M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-            </svg>`;
+        toggle.innerHTML = visibilityIcon(visible);
         toggle.title = `${visible ? 'Ocultar' : 'Mostrar'} namespace ${ns}`;
         toggle.setAttribute('aria-label', toggle.title);
         toggle.setAttribute('aria-pressed', String(!visible));
@@ -71,6 +75,37 @@ function refreshUI() {
       syncToggle();
       d.appendChild(toggle);
       legend.appendChild(d);
+    });
+  }
+
+  const statusFilters = document.getElementById('podStatusFilters');
+  if (statusFilters) {
+    statusFilters.innerHTML = '';
+    ['Running', 'Pending', 'Error'].forEach(status => {
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = `status-filter status-${status.toLowerCase()}`;
+
+      const syncToggle = () => {
+        const visible = isPodStatusVisible(status);
+        toggle.innerHTML = `
+          <span class="status-filter-dot"></span>
+          <span class="status-filter-label">${status}</span>
+          <span class="status-filter-count">${statusCounts[status]}</span>
+          <span class="status-filter-eye">${visibilityIcon(visible)}</span>`;
+        toggle.title = `${visible ? 'Ocultar' : 'Mostrar'} pods ${status}`;
+        toggle.setAttribute('aria-label', toggle.title);
+        toggle.setAttribute('aria-pressed', String(!visible));
+        toggle.classList.toggle('is-hidden', !visible);
+      };
+
+      toggle.addEventListener('click', () => {
+        setPodStatusVisibility(status, !isPodStatusVisible(status));
+        syncToggle();
+      });
+
+      syncToggle();
+      statusFilters.appendChild(toggle);
     });
   }
 }

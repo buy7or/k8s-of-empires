@@ -305,9 +305,12 @@ function buildErrorHouse(p) {
 }
 
 function buildHouse(p) {
-  if (p.status === 'Pending') return buildPendingHouse(p);
-  if (p.status === 'Error') return buildErrorHouse(p);
-  return buildRunningHouse(p);
+  let house;
+  if (p.status === 'Pending') house = buildPendingHouse(p);
+  else if (p.status === 'Error') house = buildErrorHouse(p);
+  else house = buildRunningHouse(p);
+  house.userData.podStatus = p.status;
+  return house;
 }
 
 // zona de namespace: rectángulo redondeado con borde de color

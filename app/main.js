@@ -1,0 +1,2 @@
+buildWorld();
+animate();

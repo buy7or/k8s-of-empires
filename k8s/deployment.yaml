@@ -21,8 +21,8 @@ spec:
 
       containers:
         - name: k8s-of-empires
-          image: ghcr.io/buy7or/k8s-of-empires:latest
-          imagePullPolicy: Always
+          image: ghcr.io/buy7or/k8s-of-empires:v0.1.0
+          imagePullPolicy: IfNotPresent
 
           ports:
             - name: http

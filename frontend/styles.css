@@ -21,7 +21,7 @@ body {
 canvas { display: block; }
 
 .cluster-card,
-.namespace-card,
+.status-card,
 .info-panel,
 .stats-bar { z-index: 100; }
 
@@ -185,6 +185,67 @@ h1 { margin:0; font-size:27px; letter-spacing:-.035em; }
 .cluster-label-chip > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .cluster-label-chip button { display:grid; place-items:center; width:16px; height:16px; border:0; border-radius:50%; padding:0; background:rgba(49,93,158,.12); color:#49698f; font-size:13px; line-height:1; cursor:pointer; }
 .cluster-label-chip button:hover { background:rgba(49,93,158,.22); }
+.cluster-namespace-filter { margin-top:8px; padding:10px; border:1px solid rgba(116,140,174,.16); border-radius:8px; background:rgba(248,250,253,.78); }
+.cluster-filter-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; color:#465974; font-size:11px; font-weight:700; }
+.cluster-filter-heading button {
+  border:1px solid rgba(90,115,150,.18);
+  border-radius:12px;
+  padding:3px 9px;
+  background:#fff;
+  color:#70819a;
+  font:600 9px Inter, system-ui, sans-serif;
+  cursor:pointer;
+}
+.cluster-filter-heading button:hover,
+.cluster-filter-heading button.is-active { border-color:rgba(63,127,221,.3); background:#e6effb; color:#315d9e; }
+.cluster-filter-heading button:focus-visible,
+.cluster-namespace-option:focus-visible { outline:2px solid #4a8cff; outline-offset:2px; }
+.cluster-namespace-options {
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:6px;
+  max-height:142px;
+  margin-top:7px;
+  padding:1px 4px 2px 1px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:#c7d4e6 transparent;
+}
+.cluster-namespace-search { position:relative; }
+.cluster-namespace-search svg { position:absolute; top:50%; left:9px; width:14px; height:14px; transform:translateY(-50%); fill:none; stroke:#8797ad; stroke-width:1.8; stroke-linecap:round; }
+.cluster-namespace-search input {
+  width:100%;
+  height:31px;
+  border:1px solid rgba(90,115,150,.2);
+  border-radius:6px;
+  padding:0 9px 0 29px;
+  background:#fff;
+  color:#40536f;
+  font:500 10px Inter, system-ui, sans-serif;
+}
+.cluster-namespace-search input:focus { border-color:#4a8cff; outline:2px solid rgba(74,140,255,.14); }
+.cluster-namespace-option {
+  display:flex;
+  align-items:center;
+  width:100%;
+  gap:6px;
+  min-height:28px;
+  border:1px solid rgba(90,115,150,.18);
+  border-radius:14px;
+  padding:4px 8px;
+  background:#fff;
+  color:#52647e;
+  font:600 9px Inter, system-ui, sans-serif;
+  cursor:pointer;
+}
+.cluster-namespace-option:hover { border-color:rgba(74,140,255,.3); background:#f0f5fc; }
+.cluster-namespace-option.is-active { border-color:rgba(63,127,221,.32); background:#e6effb; color:#315d9e; box-shadow:inset 0 0 0 1px rgba(63,127,221,.06); }
+.cluster-namespace-option i { width:8px; height:8px; border-radius:50%; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08); }
+.cluster-namespace-option span { min-width:0; flex:1; overflow:hidden; text-align:left; text-overflow:ellipsis; white-space:nowrap; }
+.cluster-namespace-option small { border-radius:8px; padding:1px 5px; background:#edf2f8; color:#8290a6; font-size:8px; }
+.cluster-namespace-option.is-active small { background:rgba(63,127,221,.12); color:#315d9e; }
+.cluster-namespace-empty { grid-column:1 / -1; padding:16px 8px; color:#8a97aa; font-size:10px; text-align:center; }
 .cluster-explorer { max-height:min(350px, calc(100vh - 400px)); margin-top:10px; padding-right:4px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#c7d4e6 transparent; }
 .cluster-card.has-label-suggestions .cluster-explorer { max-height:110px; }
 .technical-group,
@@ -222,40 +283,15 @@ h1 { margin:0; font-size:27px; letter-spacing:-.035em; }
 .technical-empty { display:grid; gap:4px; padding:24px 14px; border:1px dashed rgba(116,140,174,.25); border-radius:8px; color:#8492a6; text-align:center; }
 .technical-empty b { color:#52647e; font-size:12px; }
 .technical-empty span { font-size:10px; }
-.namespace-card {
+.status-card {
   position: absolute;
   right: 28px;
   top: 24px;
-  width: 408px;
+  width: 360px;
   padding: 18px 20px;
   border-radius: 8px;
 }
-.namespace-card h2 { font-size: 15px; margin: 0 0 13px; }
-.namespace-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 18px; }
-.namespace-item { display:flex; align-items:center; gap:8px; min-width:0; color:#52617a; font-size:13px; }
-.namespace-item.is-hidden .namespace-dot,
-.namespace-item.is-hidden .namespace-name { opacity:.42; }
-.namespace-name { overflow:hidden; text-overflow:ellipsis; transition:opacity .18s ease; }
-.namespace-dot { flex:0 0 auto; width:11px; height:11px; border-radius:50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); transition:opacity .18s ease; }
-.namespace-toggle {
-  margin-left:auto;
-  display:grid;
-  place-items:center;
-  flex:0 0 auto;
-  width:27px;
-  height:27px;
-  border:1px solid rgba(90,115,150,.2);
-  border-radius:6px;
-  padding:5px;
-  background:rgba(238,244,252,.7);
-  color:#59708f;
-  cursor:pointer;
-}
-.namespace-toggle svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.namespace-toggle:hover { background:#e6effb; color:#315d9e; }
-.namespace-toggle:focus-visible { outline:2px solid #4a8cff; outline-offset:2px; }
-.namespace-toggle[aria-pressed="true"] { background:#f1f3f6; color:#8a94a4; }
-.filter-divider { height:1px; margin:15px 0 13px; background:rgba(120,145,180,.15); }
+.status-card h2 { font-size: 15px; margin: 0 0 13px; }
 .status-filters { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
 .status-filter {
   display:flex;
@@ -309,7 +345,7 @@ h1 { margin:0; font-size:27px; letter-spacing:-.035em; }
 
 .info-panel {
   position:absolute;
-  right:452px;
+  right:404px;
   top:24px;
   width:310px;
   border-radius:8px;
@@ -330,7 +366,7 @@ h1 { margin:0; font-size:27px; letter-spacing:-.035em; }
 @media (max-width: 900px) {
   .cluster-card { width:auto; right:20px; left:20px; }
   .cluster-card.is-expanded { width:auto; }
-  .namespace-card { display:none; }
+  .status-card { display:none; }
   .stats-bar { grid-template-columns: repeat(3,1fr); }
   .stats-bar article:nth-child(n+4) { display:none; }
   .info-panel { right:20px; top:130px; width:280px; }

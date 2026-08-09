@@ -51,15 +51,23 @@
             <div id="clusterLabelHelp" class="cluster-label-help">Selectors are combined using AND logic.</div>
             <div id="activeClusterLabels" class="active-cluster-labels"></div>
           </div>
+          <div class="cluster-namespace-filter">
+            <div class="cluster-filter-heading">
+              <span>Filter by namespace</span>
+              <button id="clearNamespaceFilters" type="button">All</button>
+            </div>
+            <div class="cluster-namespace-search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+              <input id="clusterNamespaceSearch" type="search" placeholder="Search namespaces…" autocomplete="off" aria-label="Search namespaces" />
+            </div>
+            <div id="clusterNamespaceFilters" class="cluster-namespace-options" aria-label="Filter pods by namespace"></div>
+          </div>
           <div id="clusterExplorer" class="cluster-explorer"></div>
         </div>
       </div>
     </header>
 
-    <aside class="namespace-card glass-card">
-      <h2>Namespaces</h2>
-      <div id="namespaceLegend" class="namespace-list"></div>
-      <div class="filter-divider"></div>
+    <aside class="status-card glass-card">
       <h2>Pod status</h2>
       <div id="podStatusFilters" class="status-filters"></div>
     </aside>

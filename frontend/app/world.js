@@ -8,28 +8,14 @@ scene.add(worldGroup);
 let platformMesh = null;
 const decoGroup = new THREE.Group();
 scene.add(decoGroup);
-const hiddenNamespaces = new Set();
 const hiddenPodStatuses = new Set();
 const activePodLabelFilters = new Set();
-
-function isNamespaceVisible(namespace) {
-  return !hiddenNamespaces.has(namespace);
-}
-
-function setNamespaceVisibility(namespace, visible) {
-  if (visible) hiddenNamespaces.delete(namespace);
-  else hiddenNamespaces.add(namespace);
-
-  worldGroup.traverse(object => {
-    if (object.userData.namespaceZone === namespace) object.visible = visible;
-  });
-  hideInfo();
-}
+const activePodNamespaceFilters = new Set();
 
 function applyNamespaceVisibility() {
   worldGroup.traverse(object => {
     const namespace = object.userData.namespaceZone;
-    if (namespace) object.visible = isNamespaceVisible(namespace);
+    if (namespace) object.visible = isPodNamespaceVisible(namespace);
   });
 }
 
@@ -69,11 +55,38 @@ function getPodLabelFilters() {
   return [...activePodLabelFilters];
 }
 
+function isPodNamespaceVisible(namespace) {
+  return activePodNamespaceFilters.size === 0 || activePodNamespaceFilters.has(namespace);
+}
+
+function togglePodNamespaceFilter(namespace) {
+  if (activePodNamespaceFilters.has(namespace)) activePodNamespaceFilters.delete(namespace);
+  else activePodNamespaceFilters.add(namespace);
+  applyNamespaceVisibility();
+  applyPodFilters();
+  hideInfo();
+}
+
+function clearPodNamespaceFilters() {
+  activePodNamespaceFilters.clear();
+  applyNamespaceVisibility();
+  applyPodFilters();
+  hideInfo();
+}
+
+function getPodNamespaceFilters() {
+  return [...activePodNamespaceFilters];
+}
+
+function isPodFilterVisible(podData) {
+  return isPodLabelVisible(podData) && isPodNamespaceVisible(podData.ns);
+}
+
 function applyPodFilters() {
   worldGroup.traverse(object => {
     const podData = object.userData.podData;
     if (podData) {
-      object.visible = isPodStatusVisible(podData.status) && isPodLabelVisible(podData);
+      object.visible = isPodStatusVisible(podData.status) && isPodFilterVisible(podData);
     }
   });
 }

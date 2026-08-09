@@ -169,7 +169,7 @@ function markPodMeshes(group, podData) {
 // Running: casa terminada y operativa.
 function buildRunningHouse(p) {
   const g = new THREE.Group();
-  const col = NAMESPACES[p.ns] ?? 0x94a3b8;
+  const col = namespaceColor(p.ns);
   const w = 2.5, d = 2.35, wallH = 1.75;
 
   const body = box(w, wallH, d, Math.random() < 0.5 ? COLORS.houseWall : COLORS.houseWallAlt);
@@ -253,7 +253,7 @@ function buildPendingHouse(p) {
 // Error: edificio dañado, alarma y humo para agrupar cualquier fallo técnico.
 function buildErrorHouse(p) {
   const g = new THREE.Group();
-  const namespaceColor = NAMESPACES[p.ns] ?? 0x94a3b8;
+  const podNamespaceColor = namespaceColor(p.ns);
   const w = 2.5, d = 2.35, wallH = 1.6;
 
   const body = box(w, wallH, d, 0xc8b9b4);
@@ -287,7 +287,7 @@ function buildErrorHouse(p) {
   g.add(alarm);
 
   // El pequeño estandarte conserva el color del namespace.
-  const flag = box(0.75, 0.34, 0.06, namespaceColor);
+  const flag = box(0.75, 0.34, 0.06, podNamespaceColor);
   flag.position.set(0.38, wallH + 1.25, d / 2 + 0.12);
   g.add(flag);
 
@@ -318,7 +318,7 @@ function buildHouse(p) {
 function buildZone(ns, pods, node) {
   const g = new THREE.Group();
   g.userData.namespaceZone = ns;
-  const col = NAMESPACES[ns] ?? 0x94a3b8;
+  const col = namespaceColor(ns);
   const cols = Math.min(pods.length, 2);
   const rows = Math.ceil(pods.length / 2);
   const w = cols * 3.6 + 2.0;

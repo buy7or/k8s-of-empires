@@ -20,6 +20,9 @@ const clusterLabelSuggestions = document.getElementById('clusterLabelSuggestions
 const addClusterLabel = document.getElementById('addClusterLabel');
 const activeClusterLabels = document.getElementById('activeClusterLabels');
 const clusterLabelHelp = document.getElementById('clusterLabelHelp');
+const clusterNamespaceFilters = document.getElementById('clusterNamespaceFilters');
+const clearNamespaceFilters = document.getElementById('clearNamespaceFilters');
+const clusterNamespaceSearch = document.getElementById('clusterNamespaceSearch');
 const availablePodLabelSelectors = new Map();
 clusterToggle?.addEventListener('click', () => {
   const expanded = clusterToggle.getAttribute('aria-expanded') !== 'true';
@@ -243,6 +246,65 @@ document.addEventListener('pointerdown', event => {
   if (!event.target.closest('.cluster-label-filter')) closeLabelSuggestions();
 });
 
+function renderNamespaceFilter() {
+  if (!clusterNamespaceFilters || !clearNamespaceFilters) return;
+  const counts = new Map();
+  nodeData.forEach(node => node.pods.forEach(podData => {
+    counts.set(podData.ns, (counts.get(podData.ns) || 0) + 1);
+  }));
+  getPodNamespaceFilters()
+    .filter(namespace => !counts.has(namespace))
+    .forEach(namespace => togglePodNamespaceFilter(namespace));
+  const active = new Set(getPodNamespaceFilters());
+  const query = clusterNamespaceSearch?.value.trim().toLowerCase() || '';
+
+  clusterNamespaceFilters.innerHTML = '';
+  const matches = [...counts.entries()]
+    .filter(([namespace]) => namespace.toLowerCase().includes(query))
+    .sort(([a], [b]) => a.localeCompare(b))
+  matches.forEach(([namespace, count]) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'cluster-namespace-option';
+      button.classList.toggle('is-active', active.has(namespace));
+      button.setAttribute('aria-pressed', String(active.has(namespace)));
+      button.title = `${active.has(namespace) ? 'Remove' : 'Add'} namespace filter ${namespace}`;
+
+      const dot = document.createElement('i');
+      const color = namespaceColor(namespace);
+      dot.style.background = `#${color.toString(16).padStart(6, '0')}`;
+      const name = document.createElement('span');
+      name.textContent = namespace;
+      const badge = document.createElement('small');
+      badge.textContent = count;
+      button.append(dot, name, badge);
+      button.addEventListener('click', () => {
+        togglePodNamespaceFilter(namespace);
+        renderNamespaceFilter();
+        renderClusterExplorer();
+      });
+      clusterNamespaceFilters.appendChild(button);
+    });
+
+  if (!matches.length) {
+    const empty = document.createElement('div');
+    empty.className = 'cluster-namespace-empty';
+    empty.textContent = 'No namespaces found';
+    clusterNamespaceFilters.appendChild(empty);
+  }
+
+  const showingAll = active.size === 0;
+  clearNamespaceFilters.classList.toggle('is-active', showingAll);
+  clearNamespaceFilters.setAttribute('aria-pressed', String(showingAll));
+}
+
+clearNamespaceFilters?.addEventListener('click', () => {
+  clearPodNamespaceFilters();
+  renderNamespaceFilter();
+  renderClusterExplorer();
+});
+clusterNamespaceSearch?.addEventListener('input', renderNamespaceFilter);
+
 function resourceStatus(pods) {
   if (pods.some(p => p.status === 'Error')) return 'Error';
   if (pods.some(p => p.status === 'Pending')) return 'Pending';
@@ -331,13 +393,13 @@ function renderClusterExplorer() {
   explorer.innerHTML = '';
 
   const explorerNodes = nodeData
-    .map(node => ({ ...node, pods: node.pods.filter(podData => isPodLabelVisible(podData)) }))
-    .filter(node => node.pods.length > 0 || getPodLabelFilters().length === 0);
+    .map(node => ({ ...node, pods: node.pods.filter(podData => isPodFilterVisible(podData)) }))
+    .filter(node => node.pods.length > 0 || (getPodLabelFilters().length === 0 && getPodNamespaceFilters().length === 0));
 
   if (!explorerNodes.length) {
     const empty = document.createElement('div');
     empty.className = 'technical-empty';
-    empty.innerHTML = '<b>No matches</b><span>No pods match all selected labels.</span>';
+    empty.innerHTML = '<b>No matches</b><span>No pods match the selected namespace and labels.</span>';
     explorer.appendChild(empty);
     return;
   }
@@ -428,6 +490,7 @@ function refreshUI() {
   set('statDeployments', deployments);
   renderClusterExplorer();
   renderLabelFilter();
+  renderNamespaceFilter();
   updateLastRefreshed();
 
   const degraded = statusCounts.Error > 0 || nodeData.some(node => !node.ready);
@@ -436,40 +499,6 @@ function refreshUI() {
   set('statStatus', healthText);
   document.getElementById('statStatus')?.classList.toggle('degraded', degraded);
   document.getElementById('statStatusIcon')?.classList.toggle('degraded', degraded);
-
-  const legend = document.getElementById('namespaceLegend');
-  if (legend) {
-    legend.innerHTML = '';
-    Object.keys(NAMESPACES).forEach(ns => {
-      if (!nss.has(ns)) return;
-      const hex = '#' + NAMESPACES[ns].toString(16).padStart(6, '0');
-      const d = document.createElement('div');
-      d.className = 'namespace-item';
-      d.innerHTML = `<span class="namespace-dot" style="background:${hex}"></span><span class="namespace-name">${ns}</span>`;
-
-      const toggle = document.createElement('button');
-      toggle.type = 'button';
-      toggle.className = 'namespace-toggle';
-
-      const syncToggle = () => {
-        const visible = isNamespaceVisible(ns);
-        toggle.innerHTML = visibilityIcon(visible);
-        toggle.title = `${visible ? 'Hide' : 'Show'} namespace ${ns}`;
-        toggle.setAttribute('aria-label', toggle.title);
-        toggle.setAttribute('aria-pressed', String(!visible));
-        d.classList.toggle('is-hidden', !visible);
-      };
-
-      toggle.addEventListener('click', () => {
-        setNamespaceVisibility(ns, !isNamespaceVisible(ns));
-        syncToggle();
-      });
-
-      syncToggle();
-      d.appendChild(toggle);
-      legend.appendChild(d);
-    });
-  }
 
   const statusFilters = document.getElementById('podStatusFilters');
   if (statusFilters) {

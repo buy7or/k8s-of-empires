@@ -35,3 +35,17 @@ const NAMESPACES = {
   database: 0xeab308,
   monitoring: 0xec4899
 };
+
+const NAMESPACE_PALETTE = [
+  0x3b82f6, 0x8b5cf6, 0x14b8a6, 0xf97316, 0xeab308, 0xec4899,
+  0x06b6d4, 0x84cc16, 0xef4444, 0x6366f1, 0xd946ef, 0x10b981
+];
+
+function namespaceColor(namespace) {
+  if (NAMESPACES[namespace] !== undefined) return NAMESPACES[namespace];
+  let hash = 0;
+  for (let index = 0; index < namespace.length; index++) {
+    hash = ((hash << 5) - hash + namespace.charCodeAt(index)) | 0;
+  }
+  return NAMESPACE_PALETTE[Math.abs(hash) % NAMESPACE_PALETTE.length];
+}

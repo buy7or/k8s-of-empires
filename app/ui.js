@@ -43,10 +43,16 @@ clusterRefresh?.addEventListener('click', () => {
   if (clusterRefresh.disabled) return;
   clusterRefresh.disabled = true;
   clusterRefresh.classList.add('is-refreshing');
+  clusterRefresh.setAttribute('aria-busy', 'true');
+  clusterRefresh.setAttribute('aria-label', 'Refreshing cluster');
+  clusterRefresh.title = 'Refreshing cluster';
   buildWorld();
   setTimeout(() => {
     clusterRefresh.disabled = false;
     clusterRefresh.classList.remove('is-refreshing');
+    clusterRefresh.removeAttribute('aria-busy');
+    clusterRefresh.setAttribute('aria-label', 'Refresh cluster');
+    clusterRefresh.title = 'Refresh cluster';
   }, 500);
 });
 

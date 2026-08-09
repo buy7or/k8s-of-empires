@@ -21,8 +21,13 @@
           <p>Kubernetes Cluster Explorer</p>
         </div>
         <div class="cluster-actions">
-          <button id="clusterRefresh" class="cluster-action" type="button" aria-label="Refresh cluster" title="Refresh cluster">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+          <button id="clusterRefresh" class="cluster-action cluster-refresh" type="button" aria-label="Refresh cluster" title="Refresh cluster">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 12a9 9 0 0 1-15.4 6.4L3 16"/>
+              <path d="M3 21v-5h5"/>
+              <path d="M3 12A9 9 0 0 1 18.4 5.6L21 8"/>
+              <path d="M21 3v5h-5"/>
+            </svg>
           </button>
           <button id="clusterToggle" class="cluster-action cluster-toggle" type="button" aria-expanded="false" aria-controls="clusterDetails" aria-label="Show cluster information" title="Show cluster information">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
@@ -33,7 +38,7 @@
         <div class="cluster-details-inner">
           <div class="cluster-explorer-heading">
             <span>Cluster resources</span>
-            <small id="lastRefreshed">Updated just now</small>
+            <small id="lastRefreshed" aria-live="polite">Updated just now</small>
           </div>
           <div class="cluster-label-filter">
             <label for="clusterLabelInput">Filtrar pods por labels</label>

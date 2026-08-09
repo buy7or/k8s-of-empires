@@ -77,10 +77,16 @@ h1 { margin:0; font-size:27px; letter-spacing:-.035em; }
 .cluster-action:focus-visible { outline:2px solid #4a8cff; outline-offset:2px; }
 .cluster-action:disabled { cursor:wait; opacity:.65; }
 .cluster-action svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.cluster-refresh:not(.is-refreshing):hover svg { transform:rotate(18deg); }
 .cluster-toggle svg { transition:transform .25s ease; }
 .cluster-card.is-expanded .cluster-toggle svg { transform:rotate(180deg); }
 .cluster-action.is-refreshing svg { animation:cluster-refresh-spin .7s linear infinite; }
 @keyframes cluster-refresh-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .cluster-action svg,
+  .cluster-toggle svg { transition:none; }
+  .cluster-action.is-refreshing svg { animation:none; }
+}
 .cluster-details { display:grid; grid-template-rows:0fr; transition:grid-template-rows .28s ease; }
 .cluster-card.is-expanded .cluster-details { grid-template-rows:1fr; }
 .cluster-details-inner { min-height:0; overflow:hidden; }

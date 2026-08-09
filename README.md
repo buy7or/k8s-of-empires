@@ -1,54 +1,117 @@
 # K8s of Empires
 
-3D Kubernetes cluster visualizer built with a static HTML/CSS/JavaScript frontend and a Go backend using `client-go`.
+K8s of Empires is a 3D Kubernetes cluster visualizer with a static HTML/CSS/JavaScript frontend and a Go backend built with `client-go`.
 
-Current version: **v0.1.0**
+It provides a visual overview of cluster resources such as nodes, pods, namespaces and deployments.
+
+## Features
+
+- 3D visualization of Kubernetes resources
+- Real-time data from the Kubernetes API
+- Nodes, pods, namespaces and deployments
+- Cluster health checks
+- Label and namespace filtering
+- Read-only Kubernetes access through RBAC
+- Single container image with frontend and backend
+- Ingress-ready deployment
 
 ## Architecture
 
 ```text
 Browser
-  ↓
+  |
+  v
 Ingress
-  ↓
+  |
+  v
 Service (ClusterIP)
-  ↓
-Pod
-  ├── Frontend
-  └── Go API
-        ↓
+  |
+  v
+K8s of Empires Pod
+  |-- Frontend
+  `-- Go API
+        |
+        v
    Kubernetes API
 ```
 
-The backend uses:
+When running inside Kubernetes, the backend authenticates using `InClusterConfig()` and a dedicated `ServiceAccount`.
 
-- Local development: `~/.kube/config`
-- Inside Kubernetes: `InClusterConfig()` with a dedicated `ServiceAccount` and RBAC permissions
+## Container Image
 
-## Project structure
+The official container image is available from GitHub Container Registry:
 
 ```text
-k8s-of-empires/
-├── backend/
-│   ├── handlers/
-│   ├── kubernetes/
-│   ├── models/
-│   ├── routes/
-│   ├── go.mod
-│   └── main.go
-├── frontend/
-├── k8s/
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── ingress.yaml
-│   └── rbac.yaml
-├── Dockerfile
-└── README.md
+ghcr.io/buy7or/k8s-of-empires:v0.1.0
 ```
+
+## Kubernetes Installation
+
+### Requirements
+
+- Kubernetes cluster
+- Ingress controller, if external access is required
+- `kubectl`
+
+### Deploy
+
+Clone the repository:
+
+```bash
+git clone https://github.com/buy7or/k8s-of-empires.git
+cd k8s-of-empires
+```
+
+Apply the Kubernetes manifests:
+
+```bash
+kubectl apply -f k8s/rbac.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/ingress.yaml
+```
+
+Check the deployment:
+
+```bash
+kubectl get pods
+kubectl get svc
+kubectl get ingress
+```
+
+## Ingress
+
+The included deployment is designed to work behind an Ingress controller.
+
+Example:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: k8s-of-empires-ingress
+
+spec:
+  ingressClassName: traefik
+
+  rules:
+    - host: k8s-of-empires.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: k8s-of-empires
+                port:
+                  number: 80
+```
+
+Make sure the configured hostname resolves to your Ingress controller.
 
 ## API
 
-Current endpoints include:
+The backend exposes the following endpoints:
 
 ```text
 GET /api/health
@@ -59,18 +122,25 @@ GET /api/namespaces
 GET /api/deployments
 ```
 
-## Run locally
+## RBAC
 
-From the backend directory:
+K8s of Empires uses a dedicated `ServiceAccount` with read-only permissions for the Kubernetes resources required by the application.
 
-```bash
-go run .
-```
+The application does not require write permissions to the cluster.
 
-The backend connects using:
+## Local Development
+
+The backend can also run outside Kubernetes using the local kubeconfig:
 
 ```text
 ~/.kube/config
+```
+
+Run the backend:
+
+```bash
+cd backend
+go run .
 ```
 
 ## Docker
@@ -81,12 +151,10 @@ Build the image:
 docker build -t k8s-of-empires:local .
 ```
 
-Run locally:
+Run locally with access to your kubeconfig:
 
 ```bash
-docker run --rm -p 8080:8080 \
-  -v "$HOME/.kube/config:/root/.kube/config:ro" \
-  k8s-of-empires:local
+docker run --rm   -p 8080:8080   -v "$HOME/.kube/config:/root/.kube/config:ro"   k8s-of-empires:local
 ```
 
 Open:
@@ -95,54 +163,6 @@ Open:
 http://localhost:8080
 ```
 
-## Container image
+## License
 
-The image is published to GitHub Container Registry:
-
-```text
-ghcr.io/buy7or/k8s-of-empires:v0.1.0
-```
-
-## Kubernetes deployment
-
-The application runs with:
-
-- `Deployment`
-- `ClusterIP Service`
-- `Ingress`
-- `ServiceAccount`
-- Read-only RBAC permissions for required Kubernetes resources
-
-Apply the manifests:
-
-```bash
-kubectl apply -f k8s/rbac.yaml
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
-kubectl apply -f k8s/ingress.yaml
-```
-
-## Versioning
-
-Git tags and container tags follow semantic versioning:
-
-```text
-v0.1.0
-```
-
-Example:
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-Docker image:
-
-```text
-ghcr.io/buy7or/k8s-of-empires:v0.1.0
-```
-
-## Next step
-
-Package the Kubernetes manifests as a Helm chart.
+See the repository license for usage and distribution terms.

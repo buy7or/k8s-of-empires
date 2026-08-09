@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-of-empires
+  namespace: default
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: k8s-of-empires
+
+  template:
+    metadata:
+      labels:
+        app: k8s-of-empires
+
+    spec:
+      serviceAccountName: k8s-of-empires
+
+      containers:
+        - name: k8s-of-empires
+          image: ghcr.io/buy7or/k8s-of-empires:latest
+          imagePullPolicy: Always
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10

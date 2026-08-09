@@ -1,5 +1,8 @@
 const nodeData = [];
-const apiBaseUrl = (document.querySelector('meta[name="k8s-api-base-url"]')?.content || 'http://localhost:8080').replace(/\/$/, '');
+const apiBaseUrl = (
+  document.querySelector('meta[name="k8s-api-base-url"]')?.content
+  || ''
+).replace(/\/$/, '');
 
 async function loadNodeData() {
   const controller = new AbortController();

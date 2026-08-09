@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8s-of-empires
+  namespace: default
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: k8s-of-empires-readonly
+rules:
+  # Core resources used to build the cluster, node and namespace views.
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - pods
+      - namespaces
+    verbs:
+      - get
+      - list
+
+  # Deployments are displayed directly. ReplicaSets are required to resolve
+  # each Pod owner back to its Deployment.
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - replicasets
+    verbs:
+      - get
+      - list
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: k8s-of-empires-readonly
+subjects:
+  - kind: ServiceAccount
+    name: k8s-of-empires
+    namespace: default
+
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: k8s-of-empires-readonly

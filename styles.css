@@ -49,6 +49,7 @@ canvas { display: block; }
   gap: 16px;
 }
 .cluster-heading { min-width:0; flex:1; }
+.cluster-heading p { margin:4px 0 0; color:#8290a6; font-size:11px; }
 .k8s-logo {
   flex:0 0 auto; width: 58px; height: 58px;
   display: grid; place-items: center;
@@ -57,14 +58,14 @@ canvas { display: block; }
   clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0 50%);
   filter: drop-shadow(0 9px 10px rgba(37, 99, 235, .24));
 }
-h1 { margin:0; font-size:28px; letter-spacing:-.035em; }
-.cluster-toggle {
+h1 { margin:0; font-size:27px; letter-spacing:-.035em; }
+.cluster-actions { display:flex; flex:0 0 auto; gap:6px; margin-left:auto; }
+.cluster-action {
   display:grid;
   place-items:center;
   flex:0 0 auto;
   width:34px;
   height:34px;
-  margin-left:auto;
   border:1px solid rgba(90,115,150,.18);
   border-radius:8px;
   background:rgba(238,244,252,.68);
@@ -72,10 +73,14 @@ h1 { margin:0; font-size:28px; letter-spacing:-.035em; }
   cursor:pointer;
   transition:background .18s ease, color .18s ease;
 }
-.cluster-toggle:hover { background:#e6effb; color:#315d9e; }
-.cluster-toggle:focus-visible { outline:2px solid #4a8cff; outline-offset:2px; }
-.cluster-toggle svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transition:transform .25s ease; }
+.cluster-action:hover { background:#e6effb; color:#315d9e; }
+.cluster-action:focus-visible { outline:2px solid #4a8cff; outline-offset:2px; }
+.cluster-action:disabled { cursor:wait; opacity:.65; }
+.cluster-action svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.cluster-toggle svg { transition:transform .25s ease; }
 .cluster-card.is-expanded .cluster-toggle svg { transform:rotate(180deg); }
+.cluster-action.is-refreshing svg { animation:cluster-refresh-spin .7s linear infinite; }
+@keyframes cluster-refresh-spin { to { transform:rotate(360deg); } }
 .cluster-details { display:grid; grid-template-rows:0fr; transition:grid-template-rows .28s ease; }
 .cluster-card.is-expanded .cluster-details { grid-template-rows:1fr; }
 .cluster-details-inner { min-height:0; overflow:hidden; }

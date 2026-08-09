@@ -13,6 +13,8 @@ function visibilityIcon(visible) {
 
 const clusterCard = document.getElementById('clusterCard');
 const clusterToggle = document.getElementById('clusterToggle');
+const clusterRefresh = document.getElementById('clusterRefresh');
+const lastRefreshed = document.getElementById('lastRefreshed');
 const clusterLabelInput = document.getElementById('clusterLabelInput');
 const clusterLabelSuggestions = document.getElementById('clusterLabelSuggestions');
 const addClusterLabel = document.getElementById('addClusterLabel');
@@ -22,9 +24,30 @@ const availablePodLabelSelectors = new Map();
 clusterToggle?.addEventListener('click', () => {
   const expanded = clusterToggle.getAttribute('aria-expanded') !== 'true';
   clusterToggle.setAttribute('aria-expanded', String(expanded));
-  clusterToggle.setAttribute('aria-label', `${expanded ? 'Ocultar' : 'Mostrar'} información del clúster`);
+  clusterToggle.setAttribute('aria-label', `${expanded ? 'Hide' : 'Show'} cluster information`);
   clusterToggle.title = clusterToggle.getAttribute('aria-label');
   clusterCard?.classList.toggle('is-expanded', expanded);
+});
+
+function updateLastRefreshed() {
+  if (!lastRefreshed) return;
+  const time = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).format(new Date());
+  lastRefreshed.textContent = `Updated ${time}`;
+}
+
+clusterRefresh?.addEventListener('click', () => {
+  if (clusterRefresh.disabled) return;
+  clusterRefresh.disabled = true;
+  clusterRefresh.classList.add('is-refreshing');
+  buildWorld();
+  setTimeout(() => {
+    clusterRefresh.disabled = false;
+    clusterRefresh.classList.remove('is-refreshing');
+  }, 500);
 });
 
 function collectPodLabelSelectors() {
@@ -71,7 +94,7 @@ function renderLabelSuggestions(query = '') {
   if (matches.length) {
     const summary = document.createElement('div');
     summary.className = 'cluster-label-results-summary';
-    summary.textContent = `${matches.length} ${matches.length === 1 ? 'label disponible' : 'labels disponibles'} · desplázate para ver todos`;
+    summary.textContent = `${matches.length} ${matches.length === 1 ? 'label available' : 'labels available'} · scroll to view all`;
     clusterLabelSuggestions.appendChild(summary);
   }
   matches.forEach(([selector, count], index) => {
@@ -111,7 +134,7 @@ function renderActiveLabelFilters() {
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.textContent = '×';
-    remove.title = `Quitar filtro ${selector}`;
+    remove.title = `Remove filter ${selector}`;
     remove.setAttribute('aria-label', remove.title);
     remove.addEventListener('click', () => {
       removePodLabelFilter(selector);
@@ -133,7 +156,7 @@ function submitLabelFilter() {
   const selector = clusterLabelInput?.value.trim() || '';
   if (!availablePodLabelSelectors.has(selector)) {
     clusterLabelInput?.setAttribute('aria-invalid', 'true');
-    if (clusterLabelHelp) clusterLabelHelp.textContent = 'Selecciona un label existente en las sugerencias.';
+    if (clusterLabelHelp) clusterLabelHelp.textContent = 'Select an existing label from the suggestions.';
     return;
   }
 
@@ -144,7 +167,7 @@ function submitLabelFilter() {
   addPodLabelFilter(selector);
   clusterLabelInput.value = '';
   clusterLabelInput.removeAttribute('aria-invalid');
-  if (clusterLabelHelp) clusterLabelHelp.textContent = 'Los selectores se combinan con lógica AND.';
+  if (clusterLabelHelp) clusterLabelHelp.textContent = 'Selectors are combined using AND logic.';
   renderActiveLabelFilters();
   renderClusterExplorer();
   closeLabelSuggestions();
@@ -177,7 +200,7 @@ clusterLabelInput?.addEventListener('keydown', event => {
 });
 clusterLabelInput?.addEventListener('input', () => {
   clusterLabelInput.removeAttribute('aria-invalid');
-  if (clusterLabelHelp) clusterLabelHelp.textContent = 'Los selectores se combinan con lógica AND.';
+  if (clusterLabelHelp) clusterLabelHelp.textContent = 'Selectors are combined using AND logic.';
   renderLabelSuggestions(clusterLabelInput.value);
 });
 clusterLabelInput?.addEventListener('focus', () => renderLabelSuggestions(clusterLabelInput.value));
@@ -279,7 +302,7 @@ function renderClusterExplorer() {
   if (!explorerNodes.length) {
     const empty = document.createElement('div');
     empty.className = 'technical-empty';
-    empty.innerHTML = '<b>Sin coincidencias</b><span>Ningún pod cumple todos los labels seleccionados.</span>';
+    empty.innerHTML = '<b>No matches</b><span>No pods match all selected labels.</span>';
     explorer.appendChild(empty);
     return;
   }
@@ -366,6 +389,7 @@ function refreshUI() {
   set('statDeployments', deployments);
   renderClusterExplorer();
   renderLabelFilter();
+  updateLastRefreshed();
 
   const degraded = statusCounts.Error > 0;
   const waiting = !degraded && statusCounts.Pending > 0;
@@ -391,7 +415,7 @@ function refreshUI() {
       const syncToggle = () => {
         const visible = isNamespaceVisible(ns);
         toggle.innerHTML = visibilityIcon(visible);
-        toggle.title = `${visible ? 'Ocultar' : 'Mostrar'} namespace ${ns}`;
+        toggle.title = `${visible ? 'Hide' : 'Show'} namespace ${ns}`;
         toggle.setAttribute('aria-label', toggle.title);
         toggle.setAttribute('aria-pressed', String(!visible));
         d.classList.toggle('is-hidden', !visible);
@@ -423,7 +447,7 @@ function refreshUI() {
           <span class="status-filter-label">${status}</span>
           <span class="status-filter-count">${statusCounts[status]}</span>
           <span class="status-filter-eye">${visibilityIcon(visible)}</span>`;
-        toggle.title = `${visible ? 'Ocultar' : 'Mostrar'} pods ${status}`;
+        toggle.title = `${visible ? 'Hide' : 'Show'} ${status} pods`;
         toggle.setAttribute('aria-label', toggle.title);
         toggle.setAttribute('aria-pressed', String(!visible));
         toggle.classList.toggle('is-hidden', !visible);
@@ -464,34 +488,34 @@ function showInfo(pick) {
     const p = pick.pod;
     infoKind.textContent = 'Pod';
     infoTitle.textContent = p.name;
-    row('Estado', p.status);
-    row('Ready', p.ready ? 'Sí' : 'No');
-    if (p.reason) row('Detalle', p.reason);
+    row('Status', p.status);
+    row('Ready', p.ready ? 'Yes' : 'No');
+    if (p.reason) row('Details', p.reason);
     row('Deployment', p.deployment);
     row('Labels', Object.entries(p.labels || {}).map(([key, value]) => `${key}=${value}`).join(', '));
     row('Namespace', p.ns);
-    row('Contenedores', p.containers);
-    row('Imagen', p.image);
-    row('Puerto', ':' + p.port);
+    row('Containers', p.containers);
+    row('Image', p.image);
+    row('Port', ':' + p.port);
     const owner = nodeData.find(n => n.pods.includes(p));
-    row('Nodo', owner ? owner.name : '—');
+    row('Node', owner ? owner.name : '—');
   } else if (pick.type === 'namespace') {
     infoKind.textContent = 'Namespace';
     infoTitle.textContent = pick.ns;
-    row('En el nodo', pick.node.name);
-    row('Pods aquí', pick.count);
+    row('On node', pick.node.name);
+    row('Pods here', pick.count);
     const total = nodeData.reduce((a, n) => a + n.pods.filter(p => p.ns === pick.ns).length, 0);
-    row('Pods totales', total);
-    row('Nodos', nodeData.filter(n => n.pods.some(p => p.ns === pick.ns)).length);
+    row('Total pods', total);
+    row('Nodes', nodeData.filter(n => n.pods.some(p => p.ns === pick.ns)).length);
   } else if (pick.type === 'node') {
     const n = pick.node;
-    infoKind.textContent = 'Nodo';
+    infoKind.textContent = 'Node';
     infoTitle.textContent = n.name;
     row('IP', n.ip);
     row('Pods', n.pods.length);
     row('Namespaces', new Set(n.pods.map(p => p.ns)).size);
-    row('Contenedores', n.pods.reduce((a, p) => a + p.containers, 0));
-    row('Estado', 'Ready');
+    row('Containers', n.pods.reduce((a, p) => a + p.containers, 0));
+    row('Status', 'Ready');
   }
   infoPanel.classList.add('show');
 }

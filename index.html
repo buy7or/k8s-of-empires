@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Kubernetes Cluster Village</title>
+  <title>K8s of Empires</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -17,26 +17,32 @@
       <div class="cluster-summary">
         <div class="k8s-logo">☸</div>
         <div class="cluster-heading">
-          <h1>Kubernetes Cluster</h1>
+          <h1>K8s of Empires</h1>
+          <p>Kubernetes Cluster Explorer</p>
         </div>
-        <button id="clusterToggle" class="cluster-toggle" type="button" aria-expanded="false" aria-controls="clusterDetails" aria-label="Mostrar información del clúster" title="Mostrar información del clúster">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-        </button>
+        <div class="cluster-actions">
+          <button id="clusterRefresh" class="cluster-action" type="button" aria-label="Refresh cluster" title="Refresh cluster">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+          </button>
+          <button id="clusterToggle" class="cluster-action cluster-toggle" type="button" aria-expanded="false" aria-controls="clusterDetails" aria-label="Show cluster information" title="Show cluster information">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+        </div>
       </div>
       <div id="clusterDetails" class="cluster-details">
         <div class="cluster-details-inner">
           <div class="cluster-explorer-heading">
             <span>Cluster resources</span>
-            <small>Explorador técnico</small>
+            <small id="lastRefreshed">Updated just now</small>
           </div>
           <div class="cluster-label-filter">
             <label for="clusterLabelInput">Filtrar pods por labels</label>
             <div class="cluster-label-controls">
-              <input id="clusterLabelInput" type="search" placeholder="Buscar: tier=frontend" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="clusterLabelSuggestions" />
-              <button id="addClusterLabel" type="button">Añadir</button>
+              <input id="clusterLabelInput" type="search" placeholder="Search: tier=frontend" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="clusterLabelSuggestions" />
+              <button id="addClusterLabel" type="button">Add</button>
             </div>
             <div id="clusterLabelSuggestions" class="cluster-label-suggestions" role="listbox" hidden></div>
-            <div id="clusterLabelHelp" class="cluster-label-help">Los selectores se combinan con lógica AND.</div>
+            <div id="clusterLabelHelp" class="cluster-label-help">Selectors are combined using AND logic.</div>
             <div id="activeClusterLabels" class="active-cluster-labels"></div>
           </div>
           <div id="clusterExplorer" class="cluster-explorer"></div>
@@ -48,14 +54,14 @@
       <h2>Namespaces</h2>
       <div id="namespaceLegend" class="namespace-list"></div>
       <div class="filter-divider"></div>
-      <h2>Estado de los pods</h2>
+      <h2>Pod status</h2>
       <div id="podStatusFilters" class="status-filters"></div>
     </aside>
 
     <section id="infoPanel" class="info-panel glass-card">
-      <button id="closeInfo" aria-label="Cerrar">×</button>
-      <div class="eyebrow" id="infoKind">Recurso</div>
-      <h2 id="infoTitle">Selecciona un elemento</h2>
+      <button id="closeInfo" aria-label="Close">×</button>
+      <div class="eyebrow" id="infoKind">Resource</div>
+      <h2 id="infoTitle">Select a resource</h2>
       <div id="infoRows"></div>
     </section>
 

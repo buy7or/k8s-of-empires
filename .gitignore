@@ -1,0 +1,25 @@
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Binarios compilados
+/bin/
+backend/k8s-of-empires
+
+# Variables de entorno
+.env
+.env.*
+
+# Kubernetes local config
+.kube/
+
+# IDEs
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db

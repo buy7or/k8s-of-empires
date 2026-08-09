@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/buy7or/k8s-of-empires/models"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -20,17 +21,20 @@ func ClusterHealth(clientset *kubernetes.Clientset) http.HandlerFunc {
 		if err != nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
 
-			json.NewEncoder(w).Encode(map[string]string{
-				"status":  "error",
-				"cluster": "unreachable",
-			})
+			response := models.ClusterHealthResponse{
+				Status:  "error",
+				Cluster: "unreachable",
+			}
 
+			json.NewEncoder(w).Encode(response)
 			return
 		}
 
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "ok",
-			"cluster": "connected",
-		})
+		response := models.ClusterHealthResponse{
+			Status:  "ok",
+			Cluster: "connected",
+		}
+
+		json.NewEncoder(w).Encode(response)
 	}
 }

@@ -10,4 +10,5 @@ import (
 func Register(clientset *kubernetes.Clientset) {
 	http.HandleFunc("/api/health", handlers.Health)
 	http.HandleFunc("/api/cluster/health", handlers.ClusterHealth(clientset))
+	http.HandleFunc("/api/nodes", handlers.Nodes(clientset))
 }

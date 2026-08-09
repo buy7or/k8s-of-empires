@@ -39,21 +39,50 @@ function updateLastRefreshed() {
   lastRefreshed.textContent = `Updated ${time}`;
 }
 
-clusterRefresh?.addEventListener('click', () => {
+function setClusterLoading(loading) {
+  if (!clusterRefresh) return;
+  clusterRefresh.disabled = loading;
+  clusterRefresh.classList.toggle('is-refreshing', loading);
+  if (loading) clusterRefresh.setAttribute('aria-busy', 'true');
+  else clusterRefresh.removeAttribute('aria-busy');
+  clusterRefresh.setAttribute('aria-label', loading ? 'Refreshing cluster' : 'Refresh cluster');
+  clusterRefresh.title = clusterRefresh.getAttribute('aria-label');
+  if (loading && lastRefreshed) lastRefreshed.textContent = 'Loading cluster…';
+}
+
+function showClusterLoadError(error) {
+  const message = error instanceof Error ? error.message : 'Could not load cluster data';
+  if (lastRefreshed) lastRefreshed.textContent = 'Cluster API unavailable';
+  const explorer = document.getElementById('clusterExplorer');
+  if (explorer) {
+    explorer.innerHTML = '';
+    const empty = document.createElement('div');
+    empty.className = 'technical-empty';
+    const title = document.createElement('b');
+    title.textContent = 'Could not load the cluster';
+    const details = document.createElement('span');
+    details.textContent = message;
+    empty.append(title, details);
+    explorer.appendChild(empty);
+  }
+  const status = document.getElementById('statStatus');
+  if (status) status.textContent = 'Offline';
+  status?.classList.add('degraded');
+  document.getElementById('statStatusIcon')?.classList.add('degraded');
+}
+
+clusterRefresh?.addEventListener('click', async () => {
   if (clusterRefresh.disabled) return;
-  clusterRefresh.disabled = true;
-  clusterRefresh.classList.add('is-refreshing');
-  clusterRefresh.setAttribute('aria-busy', 'true');
-  clusterRefresh.setAttribute('aria-label', 'Refreshing cluster');
-  clusterRefresh.title = 'Refreshing cluster';
-  buildWorld();
-  setTimeout(() => {
-    clusterRefresh.disabled = false;
-    clusterRefresh.classList.remove('is-refreshing');
-    clusterRefresh.removeAttribute('aria-busy');
-    clusterRefresh.setAttribute('aria-label', 'Refresh cluster');
-    clusterRefresh.title = 'Refresh cluster';
-  }, 500);
+  const startedAt = performance.now();
+  setClusterLoading(true);
+  try {
+    await refreshClusterData();
+  } catch (error) {
+    showClusterLoadError(error);
+  } finally {
+    const remaining = Math.max(0, 500 - (performance.now() - startedAt));
+    setTimeout(() => setClusterLoading(false), remaining);
+  }
 });
 
 function collectPodLabelSelectors() {
@@ -303,7 +332,7 @@ function renderClusterExplorer() {
 
   const explorerNodes = nodeData
     .map(node => ({ ...node, pods: node.pods.filter(podData => isPodLabelVisible(podData)) }))
-    .filter(node => node.pods.length > 0);
+    .filter(node => node.pods.length > 0 || getPodLabelFilters().length === 0);
 
   if (!explorerNodes.length) {
     const empty = document.createElement('div');
@@ -315,6 +344,7 @@ function renderClusterExplorer() {
 
   const deployments = new Map();
   explorerNodes.forEach(node => node.pods.forEach(podData => {
+    if (!podData.deployment) return;
     const key = `${podData.ns}/${podData.deployment}`;
     if (!deployments.has(key)) {
       deployments.set(key, { name: podData.deployment, namespace: podData.ns, entries: [] });
@@ -327,13 +357,13 @@ function renderClusterExplorer() {
   const nodesChildren = document.createElement('div');
   nodesChildren.className = 'technical-children';
   explorerNodes.forEach(node => {
-    const item = technicalDetails(node.name, 'Ready');
+    const item = technicalDetails(node.name, node.status);
     const body = document.createElement('div');
     body.className = 'technical-item-body';
     body.appendChild(technicalMeta([
       ['IP', node.ip],
       ['Pods', node.pods.length],
-      ['Deployments', new Set(node.pods.map(p => p.deployment)).size],
+      ['Deployments', new Set(node.pods.map(p => p.deployment).filter(Boolean)).size],
       ['Containers', node.pods.reduce((total, p) => total + p.containers, 0)]
     ]));
     const podList = document.createElement('div');
@@ -357,13 +387,16 @@ function renderClusterExplorer() {
   namespacesChildren.className = 'technical-children';
   namespaces.forEach(namespace => {
     const namespaceDeployments = deploymentList.filter(deployment => deployment.namespace === namespace);
-    const podCount = namespaceDeployments.reduce((total, deployment) => total + deployment.entries.length, 0);
+    const namespaceEntries = explorerNodes.flatMap(node => node.pods
+      .filter(podData => podData.ns === namespace)
+      .map(podData => ({ pod: podData, node })));
+    const podCount = namespaceEntries.length;
     const item = technicalDetails(namespace, `${podCount} pods`);
     const body = document.createElement('div');
     body.className = 'technical-item-body';
     body.appendChild(technicalMeta([
       ['Deployments', namespaceDeployments.length],
-      ['Nodes', new Set(namespaceDeployments.flatMap(d => d.entries.map(entry => entry.node.name))).size]
+      ['Nodes', new Set(namespaceEntries.map(entry => entry.node.name)).size]
     ]));
     const nested = document.createElement('div');
     nested.className = 'technical-pods';
@@ -380,7 +413,7 @@ function renderClusterExplorer() {
 function refreshUI() {
   const pods = nodeData.reduce((a, n) => a + n.pods.length, 0);
   const containers = nodeData.reduce((a, n) => a + n.pods.reduce((b, p) => b + p.containers, 0), 0);
-  const deployments = new Set(nodeData.flatMap(n => n.pods.map(p => p.deployment))).size;
+  const deployments = new Set(nodeData.flatMap(n => n.pods.map(p => p.deployment).filter(Boolean))).size;
   const statusCounts = { Running: 0, Pending: 0, Error: 0 };
   const nss = new Set();
   nodeData.forEach(n => n.pods.forEach(p => {
@@ -397,7 +430,7 @@ function refreshUI() {
   renderLabelFilter();
   updateLastRefreshed();
 
-  const degraded = statusCounts.Error > 0;
+  const degraded = statusCounts.Error > 0 || nodeData.some(node => !node.ready);
   const waiting = !degraded && statusCounts.Pending > 0;
   const healthText = degraded ? 'Degraded' : waiting ? 'Pending' : 'Healthy';
   set('statStatus', healthText);
@@ -486,7 +519,11 @@ function showInfo(pick) {
   const row = (k, v) => {
     const d = document.createElement('div');
     d.className = 'info-row';
-    d.innerHTML = `<span>${k}</span><span>${v}</span>`;
+    const key = document.createElement('span');
+    const value = document.createElement('span');
+    key.textContent = k;
+    value.textContent = String(v);
+    d.append(key, value);
     infoRows.appendChild(d);
   };
 
@@ -497,12 +534,12 @@ function showInfo(pick) {
     row('Status', p.status);
     row('Ready', p.ready ? 'Yes' : 'No');
     if (p.reason) row('Details', p.reason);
-    row('Deployment', p.deployment);
+    if (p.deployment) row('Deployment', p.deployment);
     row('Labels', Object.entries(p.labels || {}).map(([key, value]) => `${key}=${value}`).join(', '));
     row('Namespace', p.ns);
     row('Containers', p.containers);
     row('Image', p.image);
-    row('Port', ':' + p.port);
+    if (p.port > 0) row('Port', ':' + p.port);
     const owner = nodeData.find(n => n.pods.includes(p));
     row('Node', owner ? owner.name : '—');
   } else if (pick.type === 'namespace') {
@@ -521,7 +558,7 @@ function showInfo(pick) {
     row('Pods', n.pods.length);
     row('Namespaces', new Set(n.pods.map(p => p.ns)).size);
     row('Containers', n.pods.reduce((a, p) => a + p.containers, 0));
-    row('Status', 'Ready');
+    row('Status', n.status);
   }
   infoPanel.classList.add('show');
 }

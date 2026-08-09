@@ -14,8 +14,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	routes.Register(clientset)
-
 	log.Println("API listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", routes.New(clientset)))
 }

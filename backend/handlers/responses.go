@@ -1,0 +1,18 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+)
+
+func writeJSON(w http.ResponseWriter, status int, value any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(value)
+}
+
+func writeResourceError(w http.ResponseWriter, resource string) {
+	writeJSON(w, http.StatusInternalServerError, map[string]string{
+		"error": "could not get " + resource,
+	})
+}

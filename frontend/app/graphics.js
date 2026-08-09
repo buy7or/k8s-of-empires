@@ -424,10 +424,10 @@ function buildNode(node) {
   const zones = [...byNs.entries()].map(([ns, pods]) => ({ ns, pods, obj: buildZone(ns, pods, node) }));
 
   // rejilla 2 columnas de zonas
-  const zCols = Math.min(zones.length, 2);
-  const zRows = Math.ceil(zones.length / 2);
-  const cellW = Math.max(...zones.map(z => z.obj.userData.size.w)) + 1.4;
-  const cellD = Math.max(...zones.map(z => z.obj.userData.size.d)) + 1.4;
+  const zCols = Math.max(1, Math.min(zones.length, 2));
+  const zRows = Math.max(1, Math.ceil(zones.length / 2));
+  const cellW = zones.length ? Math.max(...zones.map(z => z.obj.userData.size.w)) + 1.4 : 8;
+  const cellD = zones.length ? Math.max(...zones.map(z => z.obj.userData.size.d)) + 1.4 : 8;
 
   const innerW = zCols * cellW;
   const innerD = zRows * cellD;

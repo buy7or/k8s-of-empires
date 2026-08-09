@@ -7,13 +7,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func Nodes(clientset kubernetes.Interface) http.HandlerFunc {
+func Namespaces(clientset kubernetes.Interface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		nodes, err := kubeservice.GetNodes(r.Context(), clientset)
+		namespaces, err := kubeservice.GetNamespaces(r.Context(), clientset)
 		if err != nil {
-			writeResourceError(w, "nodes")
+			writeResourceError(w, "namespaces")
 			return
 		}
-		writeJSON(w, http.StatusOK, nodes)
+		writeJSON(w, http.StatusOK, namespaces)
 	}
 }

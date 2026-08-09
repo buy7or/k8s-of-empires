@@ -94,6 +94,10 @@ function buildWorld() {
   const COL_GAP = 7;
   const ROW_GAP = 13;
   const groups = nodeData.map(n => buildNode(n));
+  if (!groups.length) {
+    refreshUI();
+    return;
+  }
   const cols = Math.ceil(Math.sqrt(groups.length));
   const rows = Math.ceil(groups.length / cols);
   const rowGroups = Array.from({ length: rows }, (_, row) =>

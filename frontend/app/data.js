@@ -1,55 +1,45 @@
-let podSeq = 0;
+const nodeData = [];
+const apiBaseUrl = (document.querySelector('meta[name="k8s-api-base-url"]')?.content || 'http://localhost:8080').replace(/\/$/, '');
 
-function pod(name, ns, containers = 1, status = 'Running', reason = null, labels = {}) {
-  const podName = name || `pod-${++podSeq}`;
-  const tierByNamespace = {
-    frontend: 'frontend',
-    backend: 'backend',
-    database: 'data',
-    monitoring: 'observability',
-    'kube-system': 'platform',
-    default: 'services'
-  };
-  return {
-    name: podName,
-    deployment: podName,
-    ns,
-    containers,
-    status,
-    reason,
-    ready: status === 'Running',
-    labels: {
-      app: podName,
-      tier: tierByNamespace[ns] || 'services',
-      'app.kubernetes.io/managed-by': 'k8s-of-empires',
-      ...labels
-    },
-    image: 'nginx:1.27',
-    port: 8080
-  };
+async function loadNodeData() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/nodes`, {
+      headers: { Accept: 'application/json' },
+      signal: controller.signal
+    });
+    if (!response.ok) throw new Error(`The cluster API returned HTTP ${response.status}`);
+
+    const payload = await response.json();
+    if (!Array.isArray(payload)) throw new Error('The cluster API returned an invalid node list');
+
+    const nodes = payload.map(node => ({
+      name: String(node.name || 'Unnamed node'),
+      ip: String(node.ip || '—'),
+      ready: Boolean(node.ready),
+      status: String(node.status || (node.ready ? 'Ready' : 'Not Ready')),
+      pods: Array.isArray(node.pods) ? node.pods.map(pod => ({
+        name: String(pod.name || 'Unnamed pod'),
+        deployment: String(pod.deployment || ''),
+        ns: String(pod.ns || 'default'),
+        containers: Number(pod.containers) || 0,
+        status: ['Running', 'Pending', 'Error'].includes(pod.status) ? pod.status : 'Pending',
+        reason: pod.reason ? String(pod.reason) : null,
+        ready: Boolean(pod.ready),
+        labels: pod.labels && typeof pod.labels === 'object' ? pod.labels : {},
+        image: String(pod.image || '—'),
+        port: Number(pod.port) || 0
+      })) : []
+    }));
+
+    nodeData.splice(0, nodeData.length, ...nodes);
+    return nodeData;
+  } catch (error) {
+    if (error.name === 'AbortError') throw new Error('The cluster API did not respond in time');
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
-
-const nodeData = [
-  { name: 'node-01', ip: '10.0.1.11', pods: [
-    pod('api-gateway', 'default', 2),
-    pod('auth-service', 'default', 1, 'Pending', 'ContainerCreating'),
-    pod('worker-queue', 'backend', 2, 'Error', 'CrashLoopBackOff')
-  ] },
-  { name: 'node-02', ip: '10.0.1.12', pods: [
-    pod('web-frontend', 'frontend', 1), pod('web-static', 'frontend', 1),
-    pod('coredns', 'kube-system', 1),
-    pod('postgres', 'database', 2, 'Pending', 'PodInitializing'),
-    pod('order-api', 'backend', 2)
-  ] },
-  { name: 'node-03', ip: '10.0.1.13', pods: [
-    pod('cdn-edge', 'default', 1),
-    pod('grafana', 'monitoring', 2, 'Error', 'ImagePullBackOff'),
-    pod('checkout-ui', 'frontend', 1),
-    pod('redis-cache', 'database', 1, 'Error', 'OOMKilled')
-  ] },
-  { name: 'node-04', ip: '10.0.1.14', pods: [
-    pod('api-gateway', 'default', 2),
-    pod('auth-service', 'default', 1, 'Pending', 'Scheduling'),
-    pod('worker-queue', 'backend', 2)
-  ] }
-];

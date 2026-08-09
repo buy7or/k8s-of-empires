@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -10,13 +9,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func ClusterHealth(clientset *kubernetes.Clientset) http.HandlerFunc {
+func ClusterHealth(clientset kubernetes.Interface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		_, err := clientset.CoreV1().
 			Nodes().
-			List(context.Background(), metav1.ListOptions{})
+			List(r.Context(), metav1.ListOptions{})
 
 		if err != nil {
 			w.WriteHeader(http.StatusServiceUnavailable)

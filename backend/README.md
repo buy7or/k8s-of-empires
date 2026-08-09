@@ -28,12 +28,35 @@ backend/
 ├── go.sum
 ├── main.go
 ├── handlers/
+│   ├── cluster.go
+│   ├── deployments.go
 │   ├── health.go
-│   └── cluster.go
+│   ├── namespaces.go
+│   ├── nodes.go
+│   ├── pods.go
+│   └── responses.go
 ├── kubernetes/
-│   └── client.go
-└── routes/
-    └── routes.go
+│   ├── client.go
+│   ├── deployments.go
+│   ├── namespaces.go
+│   ├── nodes.go
+│   └── pods.go
+├── models/
+│   ├── cluster.go
+│   ├── deployment.go
+│   ├── health.go
+│   ├── namespace.go
+│   ├── node.go
+│   └── pod.go
+├── routes/
+│   └── routes.go
+└── tests/
+    ├── deployments_test.go
+    ├── fixtures_test.go
+    ├── namespaces_test.go
+    ├── nodes_test.go
+    ├── pods_test.go
+    └── routes_test.go
 ```
 
 ## Ejecutar el backend
@@ -83,6 +106,19 @@ Respuesta esperada:
   "status": "ok"
 }
 ```
+
+### Recursos del clúster
+
+Cada recurso dispone de su propio endpoint y atraviesa las capas `kubernetes`, `models` y `handlers`:
+
+```bash
+curl http://localhost:8080/api/nodes
+curl http://localhost:8080/api/pods
+curl http://localhost:8080/api/deployments
+curl http://localhost:8080/api/namespaces
+```
+
+`/api/nodes` mantiene los pods anidados porque es el contrato utilizado por el visualizador. `/api/pods` ofrece además un listado plano para clientes técnicos.
 
 ## Conexión con Kubernetes
 

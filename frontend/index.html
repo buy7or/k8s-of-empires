@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="k8s-api-base-url" content="http://localhost:8080" />
   <title>K8s of Empires</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,7 +42,7 @@
             <small id="lastRefreshed" aria-live="polite">Updated just now</small>
           </div>
           <div class="cluster-label-filter">
-            <label for="clusterLabelInput">Filtrar pods por labels</label>
+            <label for="clusterLabelInput">Filter pods by labels</label>
             <div class="cluster-label-controls">
               <input id="clusterLabelInput" type="search" placeholder="Search: tier=frontend" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="clusterLabelSuggestions" />
               <button id="addClusterLabel" type="button">Add</button>
@@ -72,7 +73,7 @@
 
     <footer class="stats-bar glass-card">
       <article><span class="stat-icon">⬡</span><div><small>Pods</small><strong id="statPods">0</strong></div></article>
-      <article><span class="stat-icon">▦</span><div><small>Nodes</small><strong id="statNodes">3</strong></div></article>
+      <article><span class="stat-icon">▦</span><div><small>Nodes</small><strong id="statNodes">0</strong></div></article>
       <article><span class="stat-icon">◫</span><div><small>Namespaces</small><strong id="statNamespaces">0</strong></div></article>
       <article><span class="stat-icon">◈</span><div><small>Deployments</small><strong id="statDeployments">0</strong></div></article>
       <article>

@@ -263,27 +263,38 @@ function renderNamespaceFilter() {
     .filter(([namespace]) => namespace.toLowerCase().includes(query))
     .sort(([a], [b]) => a.localeCompare(b))
   matches.forEach(([namespace, count]) => {
+      const option = document.createElement('div');
+      option.className = 'cluster-namespace-option';
+      option.classList.toggle('is-active', active.has(namespace));
+
+      const color = document.createElement('input');
+      color.type = 'color';
+      color.className = 'cluster-namespace-color';
+      color.value = namespaceColorHex(namespace);
+      color.title = `Change color for namespace ${namespace}`;
+      color.setAttribute('aria-label', color.title);
+      color.addEventListener('change', () => {
+        setNamespaceColor(namespace, color.value);
+        rebuildWorldPreservingCamera();
+      });
+
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'cluster-namespace-option';
-      button.classList.toggle('is-active', active.has(namespace));
+      button.className = 'cluster-namespace-select';
       button.setAttribute('aria-pressed', String(active.has(namespace)));
       button.title = `${active.has(namespace) ? 'Remove' : 'Add'} namespace filter ${namespace}`;
-
-      const dot = document.createElement('i');
-      const color = namespaceColor(namespace);
-      dot.style.background = `#${color.toString(16).padStart(6, '0')}`;
       const name = document.createElement('span');
       name.textContent = namespace;
       const badge = document.createElement('small');
       badge.textContent = count;
-      button.append(dot, name, badge);
+      button.append(name, badge);
       button.addEventListener('click', () => {
         togglePodNamespaceFilter(namespace);
         renderNamespaceFilter();
         renderClusterExplorer();
       });
-      clusterNamespaceFilters.appendChild(button);
+      option.append(color, button);
+      clusterNamespaceFilters.appendChild(option);
     });
 
   if (!matches.length) {

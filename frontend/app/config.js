@@ -41,11 +41,39 @@ const NAMESPACE_PALETTE = [
   0x06b6d4, 0x84cc16, 0xef4444, 0x6366f1, 0xd946ef, 0x10b981
 ];
 
+const NAMESPACE_COLOR_STORAGE_KEY = 'k8s-of-empires.namespace-colors';
+let customNamespaceColors = {};
+try {
+  const storedNamespaceColors = JSON.parse(localStorage.getItem(NAMESPACE_COLOR_STORAGE_KEY) || '{}');
+  if (storedNamespaceColors && typeof storedNamespaceColors === 'object') {
+    customNamespaceColors = Object.fromEntries(
+      Object.entries(storedNamespaceColors).filter(([, color]) => /^#[0-9a-f]{6}$/i.test(color))
+    );
+  }
+} catch {
+  customNamespaceColors = {};
+}
+
 function namespaceColor(namespace) {
+  if (customNamespaceColors[namespace]) return Number.parseInt(customNamespaceColors[namespace].slice(1), 16);
   if (NAMESPACES[namespace] !== undefined) return NAMESPACES[namespace];
   let hash = 0;
   for (let index = 0; index < namespace.length; index++) {
     hash = ((hash << 5) - hash + namespace.charCodeAt(index)) | 0;
   }
   return NAMESPACE_PALETTE[Math.abs(hash) % NAMESPACE_PALETTE.length];
+}
+
+function namespaceColorHex(namespace) {
+  return `#${namespaceColor(namespace).toString(16).padStart(6, '0')}`;
+}
+
+function setNamespaceColor(namespace, color) {
+  if (!/^#[0-9a-f]{6}$/i.test(color)) return;
+  customNamespaceColors[namespace] = color.toLowerCase();
+  try {
+    localStorage.setItem(NAMESPACE_COLOR_STORAGE_KEY, JSON.stringify(customNamespaceColors));
+  } catch {
+    // The visual change still works when browser storage is unavailable.
+  }
 }

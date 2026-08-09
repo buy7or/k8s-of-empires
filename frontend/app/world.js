@@ -191,6 +191,18 @@ function buildWorld() {
   refreshUI();
 }
 
+function rebuildWorldPreservingCamera() {
+  const target = cameraState.target.clone();
+  const tweenTarget = cameraState.tweenTarget.clone();
+  const distance = cameraState.distance;
+  const tweenDistance = cameraState.tweenDistance;
+  buildWorld();
+  cameraState.target.copy(target);
+  cameraState.tweenTarget.copy(tweenTarget);
+  cameraState.distance = distance;
+  cameraState.tweenDistance = tweenDistance;
+}
+
 // árboles, arbustos y rocas por el césped
 function decorate(pw, pd, roadZ, platformZ = 0) {
   const r = rng(4242);

@@ -1,7 +1,15 @@
 let podSeq = 0;
 
-function pod(name, ns, containers = 1, status = 'Running', reason = null) {
+function pod(name, ns, containers = 1, status = 'Running', reason = null, labels = {}) {
   const podName = name || `pod-${++podSeq}`;
+  const tierByNamespace = {
+    frontend: 'frontend',
+    backend: 'backend',
+    database: 'data',
+    monitoring: 'observability',
+    'kube-system': 'platform',
+    default: 'services'
+  };
   return {
     name: podName,
     deployment: podName,
@@ -10,6 +18,12 @@ function pod(name, ns, containers = 1, status = 'Running', reason = null) {
     status,
     reason,
     ready: status === 'Running',
+    labels: {
+      app: podName,
+      tier: tierByNamespace[ns] || 'services',
+      'app.kubernetes.io/managed-by': 'k8s-of-empires',
+      ...labels
+    },
     image: 'nginx:1.27',
     port: 8080
   };

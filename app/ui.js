@@ -13,12 +13,176 @@ function visibilityIcon(visible) {
 
 const clusterCard = document.getElementById('clusterCard');
 const clusterToggle = document.getElementById('clusterToggle');
+const clusterLabelInput = document.getElementById('clusterLabelInput');
+const clusterLabelSuggestions = document.getElementById('clusterLabelSuggestions');
+const addClusterLabel = document.getElementById('addClusterLabel');
+const activeClusterLabels = document.getElementById('activeClusterLabels');
+const clusterLabelHelp = document.getElementById('clusterLabelHelp');
+const availablePodLabelSelectors = new Map();
 clusterToggle?.addEventListener('click', () => {
   const expanded = clusterToggle.getAttribute('aria-expanded') !== 'true';
   clusterToggle.setAttribute('aria-expanded', String(expanded));
   clusterToggle.setAttribute('aria-label', `${expanded ? 'Ocultar' : 'Mostrar'} información del clúster`);
   clusterToggle.title = clusterToggle.getAttribute('aria-label');
   clusterCard?.classList.toggle('is-expanded', expanded);
+});
+
+function collectPodLabelSelectors() {
+  availablePodLabelSelectors.clear();
+  nodeData.forEach(node => node.pods.forEach(podData => {
+    Object.entries(podData.labels || {}).forEach(([key, value]) => {
+      const selector = `${key}=${value}`;
+      availablePodLabelSelectors.set(selector, (availablePodLabelSelectors.get(selector) || 0) + 1);
+    });
+  }));
+}
+
+let activeLabelSuggestion = -1;
+
+function closeLabelSuggestions() {
+  if (!clusterLabelSuggestions || !clusterLabelInput) return;
+  clusterLabelSuggestions.hidden = true;
+  clusterCard?.classList.remove('has-label-suggestions');
+  clusterLabelInput.setAttribute('aria-expanded', 'false');
+  clusterLabelInput.removeAttribute('aria-activedescendant');
+  activeLabelSuggestion = -1;
+}
+
+function setActiveLabelSuggestion(index) {
+  const options = [...(clusterLabelSuggestions?.querySelectorAll('[role="option"]') || [])];
+  if (!options.length) return;
+  activeLabelSuggestion = (index + options.length) % options.length;
+  options.forEach((option, optionIndex) => option.classList.toggle('is-active', optionIndex === activeLabelSuggestion));
+  const active = options[activeLabelSuggestion];
+  clusterLabelInput?.setAttribute('aria-activedescendant', active.id);
+  active.scrollIntoView({ block: 'nearest' });
+}
+
+function renderLabelSuggestions(query = '') {
+  if (!clusterLabelSuggestions || !clusterLabelInput) return;
+  const normalized = query.trim().toLowerCase();
+  const active = new Set(getPodLabelFilters());
+  const allMatches = [...availablePodLabelSelectors.entries()]
+    .filter(([selector]) => !active.has(selector) && selector.toLowerCase().includes(normalized))
+    .sort(([a], [b]) => a.localeCompare(b));
+  const matches = allMatches;
+
+  clusterLabelSuggestions.innerHTML = '';
+  if (matches.length) {
+    const summary = document.createElement('div');
+    summary.className = 'cluster-label-results-summary';
+    summary.textContent = `${matches.length} ${matches.length === 1 ? 'label disponible' : 'labels disponibles'} · desplázate para ver todos`;
+    clusterLabelSuggestions.appendChild(summary);
+  }
+  matches.forEach(([selector, count], index) => {
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.id = `label-suggestion-${index}`;
+    option.className = 'cluster-label-suggestion';
+    option.setAttribute('role', 'option');
+    const value = document.createElement('span');
+    value.textContent = selector;
+    const resultCount = document.createElement('small');
+    resultCount.textContent = `${count} ${count === 1 ? 'pod' : 'pods'}`;
+    option.append(value, resultCount);
+    option.addEventListener('mouseenter', () => setActiveLabelSuggestion(index));
+    option.addEventListener('click', () => {
+      clusterLabelInput.value = selector;
+      submitLabelFilter();
+    });
+    clusterLabelSuggestions.appendChild(option);
+  });
+
+  const show = matches.length > 0;
+  clusterLabelSuggestions.hidden = !show;
+  clusterCard?.classList.toggle('has-label-suggestions', show);
+  clusterLabelInput.setAttribute('aria-expanded', String(show));
+  activeLabelSuggestion = -1;
+}
+
+function renderActiveLabelFilters() {
+  if (!activeClusterLabels) return;
+  activeClusterLabels.innerHTML = '';
+  getPodLabelFilters().forEach(selector => {
+    const chip = document.createElement('span');
+    chip.className = 'cluster-label-chip';
+    const text = document.createElement('span');
+    text.textContent = selector;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = '×';
+    remove.title = `Quitar filtro ${selector}`;
+    remove.setAttribute('aria-label', remove.title);
+    remove.addEventListener('click', () => {
+      removePodLabelFilter(selector);
+      renderActiveLabelFilters();
+      renderClusterExplorer();
+    });
+    chip.append(text, remove);
+    activeClusterLabels.appendChild(chip);
+  });
+  activeClusterLabels.classList.toggle('is-empty', getPodLabelFilters().length === 0);
+}
+
+function renderLabelFilter() {
+  collectPodLabelSelectors();
+  renderActiveLabelFilters();
+}
+
+function submitLabelFilter() {
+  const selector = clusterLabelInput?.value.trim() || '';
+  if (!availablePodLabelSelectors.has(selector)) {
+    clusterLabelInput?.setAttribute('aria-invalid', 'true');
+    if (clusterLabelHelp) clusterLabelHelp.textContent = 'Selecciona un label existente en las sugerencias.';
+    return;
+  }
+
+  const key = selector.slice(0, selector.indexOf('='));
+  getPodLabelFilters().forEach(active => {
+    if (active.slice(0, active.indexOf('=')) === key) removePodLabelFilter(active);
+  });
+  addPodLabelFilter(selector);
+  clusterLabelInput.value = '';
+  clusterLabelInput.removeAttribute('aria-invalid');
+  if (clusterLabelHelp) clusterLabelHelp.textContent = 'Los selectores se combinan con lógica AND.';
+  renderActiveLabelFilters();
+  renderClusterExplorer();
+  closeLabelSuggestions();
+}
+
+addClusterLabel?.addEventListener('click', submitLabelFilter);
+clusterLabelInput?.addEventListener('keydown', event => {
+  const options = [...(clusterLabelSuggestions?.querySelectorAll('[role="option"]') || [])];
+  if (event.key === 'ArrowDown' && options.length) {
+    event.preventDefault();
+    setActiveLabelSuggestion(activeLabelSuggestion + 1);
+    return;
+  }
+  if (event.key === 'ArrowUp' && options.length) {
+    event.preventDefault();
+    setActiveLabelSuggestion(activeLabelSuggestion - 1);
+    return;
+  }
+  if (event.key === 'Escape') {
+    closeLabelSuggestions();
+    return;
+  }
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    if (activeLabelSuggestion >= 0 && options[activeLabelSuggestion]) {
+      clusterLabelInput.value = options[activeLabelSuggestion].querySelector('span').textContent;
+    }
+    submitLabelFilter();
+  }
+});
+clusterLabelInput?.addEventListener('input', () => {
+  clusterLabelInput.removeAttribute('aria-invalid');
+  if (clusterLabelHelp) clusterLabelHelp.textContent = 'Los selectores se combinan con lógica AND.';
+  renderLabelSuggestions(clusterLabelInput.value);
+});
+clusterLabelInput?.addEventListener('focus', () => renderLabelSuggestions(clusterLabelInput.value));
+document.addEventListener('pointerdown', event => {
+  if (!event.target.closest('.cluster-label-filter')) closeLabelSuggestions();
 });
 
 function resourceStatus(pods) {
@@ -108,8 +272,20 @@ function renderClusterExplorer() {
   if (!explorer) return;
   explorer.innerHTML = '';
 
+  const explorerNodes = nodeData
+    .map(node => ({ ...node, pods: node.pods.filter(podData => isPodLabelVisible(podData)) }))
+    .filter(node => node.pods.length > 0);
+
+  if (!explorerNodes.length) {
+    const empty = document.createElement('div');
+    empty.className = 'technical-empty';
+    empty.innerHTML = '<b>Sin coincidencias</b><span>Ningún pod cumple todos los labels seleccionados.</span>';
+    explorer.appendChild(empty);
+    return;
+  }
+
   const deployments = new Map();
-  nodeData.forEach(node => node.pods.forEach(podData => {
+  explorerNodes.forEach(node => node.pods.forEach(podData => {
     const key = `${podData.ns}/${podData.deployment}`;
     if (!deployments.has(key)) {
       deployments.set(key, { name: podData.deployment, namespace: podData.ns, entries: [] });
@@ -118,10 +294,10 @@ function renderClusterExplorer() {
   }));
   const deploymentList = [...deployments.values()].sort((a, b) => a.name.localeCompare(b.name));
 
-  const nodesGroup = technicalDetails('Nodes', nodeData.length, 'technical-group');
+  const nodesGroup = technicalDetails('Nodes', explorerNodes.length, 'technical-group');
   const nodesChildren = document.createElement('div');
   nodesChildren.className = 'technical-children';
-  nodeData.forEach(node => {
+  explorerNodes.forEach(node => {
     const item = technicalDetails(node.name, 'Ready');
     const body = document.createElement('div');
     body.className = 'technical-item-body';
@@ -146,7 +322,7 @@ function renderClusterExplorer() {
   deploymentList.forEach(deployment => deploymentsChildren.appendChild(deploymentDetails(deployment)));
   deploymentsGroup.appendChild(deploymentsChildren);
 
-  const namespaces = [...new Set(nodeData.flatMap(node => node.pods.map(p => p.ns)))].sort();
+  const namespaces = [...new Set(explorerNodes.flatMap(node => node.pods.map(p => p.ns)))].sort();
   const namespacesGroup = technicalDetails('Namespaces', namespaces.length, 'technical-group');
   const namespacesChildren = document.createElement('div');
   namespacesChildren.className = 'technical-children';
@@ -189,6 +365,7 @@ function refreshUI() {
   set('statNamespaces', nss.size);
   set('statDeployments', deployments);
   renderClusterExplorer();
+  renderLabelFilter();
 
   const degraded = statusCounts.Error > 0;
   const waiting = !degraded && statusCounts.Pending > 0;
@@ -291,6 +468,7 @@ function showInfo(pick) {
     row('Ready', p.ready ? 'Sí' : 'No');
     if (p.reason) row('Detalle', p.reason);
     row('Deployment', p.deployment);
+    row('Labels', Object.entries(p.labels || {}).map(([key, value]) => `${key}=${value}`).join(', '));
     row('Namespace', p.ns);
     row('Contenedores', p.containers);
     row('Imagen', p.image);

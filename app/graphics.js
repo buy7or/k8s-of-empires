@@ -310,6 +310,7 @@ function buildHouse(p) {
   else if (p.status === 'Error') house = buildErrorHouse(p);
   else house = buildRunningHouse(p);
   house.userData.podStatus = p.status;
+  house.userData.podData = p;
   return house;
 }
 

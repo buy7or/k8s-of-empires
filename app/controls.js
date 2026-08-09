@@ -80,7 +80,18 @@ renderer.domElement.addEventListener('dblclick', e => {
 // desplazamiento con WASD / flechas
 const keys = {};
 const PAN = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'];
-addEventListener('keydown', e => { if (PAN.includes(e.key)) { keys[e.key.toLowerCase()] = true; cameraState.tweening = false; e.preventDefault(); } });
+function isEditableTarget(target) {
+  return target instanceof Element && Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
+}
+
+addEventListener('keydown', e => {
+  if (isEditableTarget(e.target)) return;
+  if (PAN.includes(e.key)) {
+    keys[e.key.toLowerCase()] = true;
+    cameraState.tweening = false;
+    e.preventDefault();
+  }
+});
 addEventListener('keyup', e => { if (PAN.includes(e.key)) keys[e.key.toLowerCase()] = false; });
 const panVel = new THREE.Vector3();
 function updatePan() {

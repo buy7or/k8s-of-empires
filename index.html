@@ -29,6 +29,16 @@
             <span>Cluster resources</span>
             <small>Explorador técnico</small>
           </div>
+          <div class="cluster-label-filter">
+            <label for="clusterLabelInput">Filtrar pods por labels</label>
+            <div class="cluster-label-controls">
+              <input id="clusterLabelInput" type="search" placeholder="Buscar: tier=frontend" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="clusterLabelSuggestions" />
+              <button id="addClusterLabel" type="button">Añadir</button>
+            </div>
+            <div id="clusterLabelSuggestions" class="cluster-label-suggestions" role="listbox" hidden></div>
+            <div id="clusterLabelHelp" class="cluster-label-help">Los selectores se combinan con lógica AND.</div>
+            <div id="activeClusterLabels" class="active-cluster-labels"></div>
+          </div>
           <div id="clusterExplorer" class="cluster-explorer"></div>
         </div>
       </div>

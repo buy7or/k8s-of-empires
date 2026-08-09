@@ -10,6 +10,7 @@ const decoGroup = new THREE.Group();
 scene.add(decoGroup);
 const hiddenNamespaces = new Set();
 const hiddenPodStatuses = new Set();
+const activePodLabelFilters = new Set();
 
 function isNamespaceVisible(namespace) {
   return !hiddenNamespaces.has(namespace);
@@ -39,17 +40,41 @@ function isPodStatusVisible(status) {
 function setPodStatusVisibility(status, visible) {
   if (visible) hiddenPodStatuses.delete(status);
   else hiddenPodStatuses.add(status);
-
-  worldGroup.traverse(object => {
-    if (object.userData.podStatus === status) object.visible = visible;
-  });
+  applyPodFilters();
   hideInfo();
 }
 
-function applyPodStatusVisibility() {
+function isPodLabelVisible(podData) {
+  return [...activePodLabelFilters].every(selector => {
+    const separator = selector.indexOf('=');
+    const key = selector.slice(0, separator);
+    const value = selector.slice(separator + 1);
+    return podData.labels?.[key] === value;
+  });
+}
+
+function addPodLabelFilter(selector) {
+  activePodLabelFilters.add(selector);
+  applyPodFilters();
+  hideInfo();
+}
+
+function removePodLabelFilter(selector) {
+  activePodLabelFilters.delete(selector);
+  applyPodFilters();
+  hideInfo();
+}
+
+function getPodLabelFilters() {
+  return [...activePodLabelFilters];
+}
+
+function applyPodFilters() {
   worldGroup.traverse(object => {
-    const status = object.userData.podStatus;
-    if (status) object.visible = isPodStatusVisible(status);
+    const podData = object.userData.podData;
+    if (podData) {
+      object.visible = isPodStatusVisible(podData.status) && isPodLabelVisible(podData);
+    }
   });
 }
 
@@ -144,7 +169,7 @@ function buildWorld() {
 
   decorate(pw, pd, frontRoadZ, platformZ);
   applyNamespaceVisibility();
-  applyPodStatusVisibility();
+  applyPodFilters();
   updateCameraFraming(Math.max(pw, pd), platformZ);
   refreshUI();
 }

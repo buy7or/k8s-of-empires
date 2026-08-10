@@ -13,7 +13,6 @@ It provides a visual overview of cluster resources such as nodes, pods, namespac
 - Label and namespace filtering
 - Read-only Kubernetes access through RBAC
 - Single container image with frontend and backend
-- Ingress-ready deployment
 
 ## Architecture
 
@@ -21,7 +20,7 @@ It provides a visual overview of cluster resources such as nodes, pods, namespac
 Browser
   |
   v
-Ingress
+Ingress/Gateway (not included here)
   |
   v
 Service (ClusterIP)

@@ -47,12 +47,6 @@ ghcr.io/buy7or/k8s-of-empires:v0.1.0
 
 ## Kubernetes Installation
 
-### Requirements
-
-- Kubernetes cluster
-- Ingress controller, if external access is required
-- `kubectl`
-
 ### Deploy
 
 Clone the repository:
@@ -68,7 +62,6 @@ Apply the Kubernetes manifests:
 kubectl apply -f k8s/rbac.yaml
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
-kubectl apply -f k8s/ingress.yaml
 ```
 
 Check the deployment:
@@ -76,38 +69,7 @@ Check the deployment:
 ```bash
 kubectl get pods
 kubectl get svc
-kubectl get ingress
 ```
-
-## Ingress
-
-The included deployment is designed to work behind an Ingress controller.
-
-Example:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: k8s-of-empires-ingress
-
-spec:
-  ingressClassName: traefik
-
-  rules:
-    - host: k8s-of-empires.home
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: k8s-of-empires
-                port:
-                  number: 80
-```
-
-Make sure the configured hostname resolves to your Ingress controller.
 
 ## API
 
